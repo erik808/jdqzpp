@@ -1,21 +1,23 @@
 #ifndef JDQZ_DECL_H
 #define JDQZ_DECL_H
 
-// TODO
+// This is a port of the original code by Fokkema and van Gijzen.
 
-// Model members:
-//   AMUL
-//   BMUL
-//   PRECON
+// Matrix members:
+//   AMUL(N, Vector, Vector)
+//   BMUL(N, Vector, Vector)
+//   PRECON(N, Vector, Vector)
 
 // Vector members:
 //   TODO
 
-template<typename Model, typename Vector>
+template<typename Matrix, typename Vector>
 class JDQZ
 {
+	
 public:
-	JDQZ(Model model)
+	JDQZ(Model model);
+	void setup();	
 };
 
 #endif
