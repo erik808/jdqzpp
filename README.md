@@ -1,2 +1,2 @@
-# jdqz-
-Templated JDQZ generalized eigenvalue problem solver
+# jdqz++
+Templated C++ implementation of the JDQZ generalized eigenvalue problem solver.
