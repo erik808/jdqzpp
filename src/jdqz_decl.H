@@ -1,7 +1,8 @@
 #ifndef JDQZ_DECL_H
 #define JDQZ_DECL_H
 
-// This is a port of the original code by Fokkema and van Gijzen.
+// This is (going to be) a templated port of
+// the original JDQZ code by Fokkema and van Gijzen.
 
 // Matrix members:
 //   AMUL(N, Vector, Vector)
@@ -16,7 +17,7 @@ class JDQZ
 {
 	
 public:
-	JDQZ(Model model);
+	JDQZ(Matrix matrix);
 	void setup();	
 };
 
