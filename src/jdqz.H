@@ -41,7 +41,8 @@ void JDQZ<Matrix>::solve()
 			// and zero imaginary part. Values uniform in [-1,1].
 
 			//--> right now we use ones in the example code for comparison
-			// work[v].random();
+			//--> before we can continue we need a nice wrapper for std::vector<std::complex ..
+			// work[v].random();	   
 
 			
 		}
