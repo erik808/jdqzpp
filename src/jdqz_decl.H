@@ -15,9 +15,12 @@
 // Vector members:
 //   TODO
 
-template<typename Matrix, typename Vector>
+template<typename Matrix>
 class JDQZ
 {
+	// Get Vector type from matrix
+	using Vector = typename Matrix::Vector;
+	
 	// Size of problem
 	int n_;
 
@@ -28,24 +31,38 @@ class JDQZ
 
 	// Tracking parameter	
 	double lock_;
-	
-	int kmax_;
-	int jmax_;
-	int jmin_;
-	int maxstep_;
-	int testspace;
-	int j_;
 
-	// order =  0: nearest to target
-	// order = -1: smallest real part
-	// order =  1: largest real part
-	// order = -2: smallest complex part
-	// order =  2: largest complex part
+	// Number of wanted eigensolutions, on output: number of converged eigenpairs
+	int kmax_;
+
+	// Maximum size of the search space
+	int jmax_;
+
+	// Minimum size of the search space
+	int jmin_;
+
+	// Maximum number of Jacobi-Davidson iterations
+	int maxstep_;
+
+	// Determines how to expand the testspace W:
+	//     Testspace 1: w = "Standard Petrov" * v            (Section 3.1.1)
+	//     Testspace 2: w = "Standard 'variable' Petrov" * v (Section 3.1.2)
+	//     Testspace 3: w = "Harmonic Petrov" * v            (Section 3.5.1)
+	int testspace_;
+
+	// Selection criterion for Ritz values:
+	//   order =  0: nearest to target
+	//   order = -1: smallest real part
+	//   order =  1: largest real part
+	//   order = -2: smallest complex part
+	//   order =  2: largest complex part
 	int order_;
 
 	// method = 1: gmres(m)
 	// method = 2: cgstab(l)
-	int method_;
+ 	int method_;
+
+	enum Method {GMRES = 1, CGSTAB};
 
     // Searchspace gmres(m):
 	int m_;
@@ -56,31 +73,35 @@ class JDQZ
 	// Maximum number of matvecs in cgstab or gmres
 	int maxnmv_;
 
-	// Testspace 1: w = "Standard Petrov" * v (Section 3.1.1)
-	// Testspace 2: w = "Standard 'variable' Petrov" * v (Section 3.1.2)
-	// Testspace 3: w = "Harmonic Petrov" * v (Section 3.5.1)
-	int testspace_;
-
 	// Compute the converged eigenvectors
 	bool wanted_;
 	
 	// Eigenvalue pairs
-	std::vector<std::complex<double> > alpha_,;
-	int beta_;
+	std::vector<std::complex<double> > alpha_, beta_;
 
 	// Size of workspace
 	int lwork_;
-
+	
 	// Workspace: two dimensional complex array of size n x lwork
-	std::vector<Vector> zwork_;
+	std::vector<Vector> work_;
+
+	// Indices referring to columns in the workspace, see setIndices()
+	int d_, tp_, u_, v_, w_, av_, bv_, aux_, q_, z_, kz_;
 
 	// Converged eigenvectors if wanted = true, else converged Schur vectors.
 	std::vector<Vector> eivec_;
 
+	// Matrix wrapper
+	Matrix mat_;
 	
 public:
-	JDQZ(Matrix matrix);
-	void setParameters();	
+	JDQZ(Matrix &matrix);
+
+	void setParameters();
+	void setIndices();
+	void solve();
+
+	int size() { return n_; }
 };
 
 #endif
