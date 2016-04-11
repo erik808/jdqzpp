@@ -25,15 +25,27 @@ JDQZ(Matrix &matrix)
 template<typename Matrix>
 void JDQZ<Matrix>::solve()
 {
-	//-------------------------------------------------------
-	// setup indices to specific elements in the workspace
-	// d = rhs
-	int d = 0;
-
-	// 
-
+	// some initializations
+	int step      = 0;
+	int solvestep = 0;
+	int k         = 0;
+	int j         = 0;
 	
-	
+	while (k < kmax_ && step < maxstep_)
+	{
+		step++;
+		solvestep++;
+		if (j == 0)
+		{
+			// Initialize search and test space with random real part
+			// and zero imaginary part. Values uniform in [-1,1].
+
+			//--> right now we use ones in the example code for comparison
+			// work[v].random();
+
+			
+		}
+	}
 }
 
 
