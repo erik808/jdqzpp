@@ -13,6 +13,15 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g")
 
 # Google test
 find_package(GTest)
+
+if (NOT GTEST_FOUND)
+  set(GTEST_ROOT "$ENV{SHARED_DIR}")
+  unset(GTEST_INCLUDE_DIR CACHE) #FindGTEST quirk
+  find_package(GTest)
+endif (NOT GTEST_FOUND)
+
+message("${GTEST_INCLUDE_DIRS}")
+
 include_directories(${GTEST_INCLUDE_DIRS})
 target_link_libraries (test_jdqz ${GTEST_LIBRARIES})
 
