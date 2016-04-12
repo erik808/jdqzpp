@@ -20,12 +20,12 @@ class JDQZ
 {
 	// Get Vector type from matrix
 	using Vector = typename Matrix::Vector;
-	
+
 	// Size of problem
 	int n_;
 
-	// The value near which the eigenvalues are sought
-	std::complex<double> target_;
+	// The shift / value near which the eigenvalues are sought
+	std::complex<double> shift_;
 	
 	double tol_;
 

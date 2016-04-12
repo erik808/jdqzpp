@@ -2,6 +2,7 @@
 #define JDQZ_H
 
 #include "jdqz_decl.H"
+#include <math.h>
 
 //==================================================================
 // constructor
@@ -30,6 +31,26 @@ void JDQZ<Matrix>::solve()
 	int solvestep = 0;
 	int k         = 0;
 	int j         = 0;
+	int mxmv     = 0;
+	
+	double deps   = 1.0;
+	std::complex<double> evcond( sqrt(pow(abs(shift_),2)+1.0));
+
+	
+    //  complex 
+	//  evcond = dcmplx(sqrt(abs(shift)**2+abs(one)**2))
+	// 	shifta = shift/evcond
+	// 	shiftb = one/evcond
+
+    //  targeta = shifta
+    //  targetb = shiftb
+
+    //  zalpha = shifta
+    //  zbeta = shiftb
+
+	// 	std::complex<double> zalpha = shifta 
+    //  zbeta = shiftb
+
 	
 	while (k < kmax_ && step < maxstep_)
 	{
@@ -41,11 +62,24 @@ void JDQZ<Matrix>::solve()
 			// and zero imaginary part. Values uniform in [-1,1].
 
 			//--> right now we use ones in the example code for comparison
-			//--> before we can continue we need a nice wrapper for std::vector<std::complex ..
-			// work[v].random();	   
-
-			
+			work_[v_].random();
+			std::cout << work_[v_].norm() << std::endl;
+			std::cout << work_[v_].size() << std::endl;
 		}
+		else 
+		{
+			mxmv = maxnmv_;
+			deps = pow(2.0, -solvestep);
+			if (j < jmin_)
+			{
+				mxmv = 1;
+				// zgmres(n_, work_[v_+j], work_[d_], m_, deps,
+				// 	   mxmv, zalpha, zbeta, k+1,
+				// 	   work(1,kz), work(1,q), invqkz, ldqkz,
+				// 	   ipivqkz, f, work(1,u), work(1,tp) )
+			}
+		}
+
 	}
 }
 
@@ -58,8 +92,8 @@ void JDQZ<Matrix>::setParameters()
 	n_ = mat_.size();
 
 	//-------------------------------------------------------
-	// temporarily hardcoded parameters
-	target_    = std::complex<double>(0,0);
+	// temporarily hardcoded parameters 
+	shift_     = std::complex<double>(0,0);
 	tol_       = 1e-9;
 	kmax_      = 5;
 	jmax_      = 20;
@@ -82,7 +116,7 @@ void JDQZ<Matrix>::setParameters()
 
 	std::cout << "\nJDQZ Parameters:   " << std::endl;
 	std::cout << " | n_         " << n_ << std::endl;
-	std::cout << " | target_    " << target_ << std::endl;
+	std::cout << " | shift_     " << shift_ << std::endl;
 	std::cout << " | tol_       " << tol_ << std::endl;
 	std::cout << " | kmax_      " << kmax_ << std::endl;
 	std::cout << " | jmax_      " << jmax_ << std::endl;

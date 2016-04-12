@@ -2,8 +2,41 @@
 #include "jdqz.H"
 #include <vector>
 #include <complex>
+#include <iostream>
 
-typedef std::vector<std::complex<double> > vector;
+class TestVector : public std::vector<std::complex<double> >
+{
+public:
+
+	TestVector(size_t n) :
+		std::vector<std::complex<double> >(n){}		   
+
+	TestVector(size_t n, double num) :
+		std::vector<std::complex<double> >(n,num) {}		   
+	
+	// for now we let this set the real parts to 1
+	void random()
+		{
+			for (auto &el: *this)
+				el = 1;
+		}
+
+	friend std::ostream &operator<<(std::ostream &out, TestVector const &vec)
+		{
+			for (auto &el: vec)
+				out << el << '\n';
+			return out;
+		}
+
+	double norm()
+		{
+			double sum = 0.0;
+			for (auto &el: *this)
+				sum += pow(el.real(), 2) + pow(el.imag(), 2);
+			return sqrt(sum);
+		}
+};
+
 
 //------------------------------------------------------------------
 // Example matrix wrapper
@@ -11,7 +44,7 @@ class TestMatrix
 {
 public:
 	// Define a Vector type
-	using Vector = std::vector<std::complex<double> >;
+	using Vector = TestVector;
 
 private:	
 	// Problem size
@@ -49,9 +82,9 @@ public:
 TEST(Matrix, Operators)
 {
 	size_t n = 100;
-	vector vec1(n, 1.0);
-	vector vec2(n, 0.0);
-	vector vec3(n, 0.0);
+	TestVector vec1(n, 1.0);
+	TestVector vec2(n, 0.0);
+	TestVector vec3(n, 0.0);
 		
 	TestMatrix testmat(n);
 
@@ -71,6 +104,15 @@ TEST(JDQZ, Setup)
 	TestMatrix testmat(size);
 	JDQZ<TestMatrix> jdqz(testmat);
 	EXPECT_EQ(jdqz.size(), size);
+}
+
+//------------------------------------------------------------------
+TEST(JDQZ, Run)
+{
+	size_t size = 100;
+	TestMatrix testmat(size);
+	JDQZ<TestMatrix> jdqz(testmat);
+	jdqz.solve();
 }
 
 //------------------------------------------------------------------
