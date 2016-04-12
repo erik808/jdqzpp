@@ -4,6 +4,8 @@
 #include "jdqz_decl.H"
 #include <math.h>
 
+typedef std::complex<double> complex;
+
 //==================================================================
 // constructor
 template<typename Matrix>
@@ -31,17 +33,27 @@ void JDQZ<Matrix>::solve()
 	int solvestep = 0;
 	int k         = 0;
 	int j         = 0;
-	int mxmv     = 0;
-	
-	double deps   = 1.0;
+	int mxmv      = 0;
+	int ldvs      = 50;
+	int ldqkz     = ldvs;
 
-	std::complex<double> evcond( sqrt(pow(abs(shift_),2) + 1.0));
-	std::complex<double> shifta  = shift_ / evcond;
-	std::complex<double> shiftb  = 1.0    / evcond;
-	std::complex<double> targeta = shifta;
-	std::complex<double> targetb = shiftb;
-	std::complex<double> zalpha  = shifta;
-	std::complex<double> zbeta   = shiftb;
+	double deps   = 1.0;		
+
+	complex evcond( sqrt(pow(abs(shift_),2) + 1.0));
+	complex shifta  = shift_ / evcond;
+	complex shiftb  = 1.0    / evcond;
+	
+	complex targeta = shifta;
+	complex targetb = shiftb;
+	complex zalpha  = shifta;
+	complex zbeta   = shiftb;
+
+	std::vector<std::vector<complex> > invqkz
+		(ldqkz, std::vector<complex>(ldqkz));
+
+	std::vector<int> ipivqkz(ldqkz);
+
+	std::vector<complex> f(ldqkz);
 	
 	while (k < kmax_ && step < maxstep_)
 	{
@@ -62,14 +74,51 @@ void JDQZ<Matrix>::solve()
 			if (j < jmin_)
 			{
 				mxmv = 1;
+				// --> we should to pass indices instead of arrays
 				// zgmres(n_, work_[v_+j], work_[d_], m_, deps,
-				// 	   mxmv, zalpha, zbeta, k+1,
-				// 	   work(1,kz), work(1,q), invqkz, ldqkz,
-				// 	   ipivqkz, f, work(1,u), work(1,tp) )
+				//        mxmv, zalpha, zbeta, k+1,
+				//        work_[kz_], work_[q_], invqkz, ldqkz,
+				//        ipivqkz, f, work_[u_], work_[tp_] );
+			}
+			else if (method_ == GMRES)
+			{
+			}
+ 			else if (method_ == CGSTAB)
+			{
 			}
 		}
+		j++;
 
+		// zmgs(n_, j-1, v_, v_+j-1, 1);
 	}
+}
+
+//==================================================================
+template<typename Matrix>
+void JDQZ<Matrix>::zgmres()
+{}
+
+//==================================================================
+template<typename Matrix>
+void JDQZ<Matrix>::zmgs(int n, int k, int v, int w, int job)
+{
+	double s1 = work_[w].norm();
+	double s0;
+	std::complex<double> znrm;
+	for (int i = 0; i <= k-1; ++i)
+	{
+		s0 = s1;
+		zortho(n, v+i, w, s0, s1, znrm);
+	}
+}
+
+//==================================================================
+template<typename Matrix>
+void JDQZ<Matrix>::zortho(int n, int v, int w,
+						  double s0, double s1,
+						  std::complex<double> &znrm)
+{
+	znrm = work_[v].zdot(work_[w]);
 }
 
 

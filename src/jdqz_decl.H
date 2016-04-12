@@ -97,11 +97,16 @@ class JDQZ
 public:
 	JDQZ(Matrix &matrix);
 
+	void solve();
+	int  size() { return n_; }
+
+private:
 	void setParameters();
 	void setIndices();
-	void solve();
-
-	int size() { return n_; }
+	void zgmres();
+	void zmgs(int n, int k, int v, int w, int job);
+	void zortho(int n, int v, int w,
+				double s0, double s1, std::complex<double> &znrm);
 };
 
 #endif

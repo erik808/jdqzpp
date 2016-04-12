@@ -3,6 +3,7 @@
 #include <vector>
 #include <complex>
 #include <iostream>
+#include <assert.h>
 
 class TestVector : public std::vector<std::complex<double> >
 {
@@ -35,9 +36,26 @@ public:
 				sum += pow(el.real(), 2) + pow(el.imag(), 2);
 			return sqrt(sum);
 		}
+
+	std::complex<double> zdot(TestVector const &other)
+		{
+			assert(this->size() == other.size());
+			std::complex<double> result(0,0);
+			for (size_t i = 0; i != other.size(); ++i)
+				result += std::conj((*this)[i]) * other[i];			
+			return result;
+		}
+
+	// this = this + a * x
+	void zaxpy(std::complex<double> za, TestVector const &zx)
+		{
+			assert(this->size() == zx.size());
+			for (size_t i = 0; i != zx.size(); ++i)
+				(*this)[i] += za * zx[i];
+		}
 };
 
-
+ 
 //------------------------------------------------------------------
 // Example matrix wrapper
 class TestMatrix
@@ -79,6 +97,28 @@ public:
 };
 
 //------------------------------------------------------------------
+TEST(Vector, General)
+{
+	TestVector vec1(4, 0.0);
+	TestVector vec2(4, 0.0);
+	vec1[0].real(1.0); vec1[0].imag(2.0);
+	vec1[1].real(1.0); vec1[1].imag(0.0);
+	vec1[2].real(1.0); vec1[2].imag(0.0);
+	vec1[3].real(2.0); vec1[3].imag(0.0);
+
+	vec2[0].real(0.0); vec2[0].imag(2.0);
+	vec2[1].real(0.0); vec2[1].imag(1.0);
+	vec2[2].real(1.0); vec2[2].imag(-1.0);
+	vec2[3].real(1.0); vec2[3].imag(2.0);
+
+	std::complex<double> result = vec1.zdot(vec2);
+	
+	EXPECT_EQ(result.real(), 7);
+	EXPECT_EQ(result.imag(), 6);
+	
+}
+
+//------------------------------------------------------------------
 TEST(Matrix, Operators)
 {
 	size_t n = 100;
@@ -113,7 +153,7 @@ TEST(JDQZ, Run)
 	TestMatrix testmat(size);
 	JDQZ<TestMatrix> jdqz(testmat);
 	jdqz.solve();
-}
+} 
 
 //------------------------------------------------------------------
 int main(int argc, char **argv)
