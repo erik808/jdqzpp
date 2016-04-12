@@ -34,23 +34,14 @@ void JDQZ<Matrix>::solve()
 	int mxmv     = 0;
 	
 	double deps   = 1.0;
-	std::complex<double> evcond( sqrt(pow(abs(shift_),2)+1.0));
 
-	
-    //  complex 
-	//  evcond = dcmplx(sqrt(abs(shift)**2+abs(one)**2))
-	// 	shifta = shift/evcond
-	// 	shiftb = one/evcond
-
-    //  targeta = shifta
-    //  targetb = shiftb
-
-    //  zalpha = shifta
-    //  zbeta = shiftb
-
-	// 	std::complex<double> zalpha = shifta 
-    //  zbeta = shiftb
-
+	std::complex<double> evcond( sqrt(pow(abs(shift_),2) + 1.0));
+	std::complex<double> shifta  = shift_ / evcond;
+	std::complex<double> shiftb  = 1.0    / evcond;
+	std::complex<double> targeta = shifta;
+	std::complex<double> targetb = shiftb;
+	std::complex<double> zalpha  = shifta;
+	std::complex<double> zbeta   = shiftb;
 	
 	while (k < kmax_ && step < maxstep_)
 	{
@@ -63,8 +54,6 @@ void JDQZ<Matrix>::solve()
 
 			//--> right now we use ones in the example code for comparison
 			work_[v_].random();
-			std::cout << work_[v_].norm() << std::endl;
-			std::cout << work_[v_].size() << std::endl;
 		}
 		else 
 		{

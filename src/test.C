@@ -27,7 +27,7 @@ public:
 				out << el << '\n';
 			return out;
 		}
-
+	
 	double norm()
 		{
 			double sum = 0.0;
