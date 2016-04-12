@@ -89,7 +89,9 @@ void JDQZ<Matrix>::solve()
 		}
 		j++;
 
-		// zmgs(n_, j-1, v_, v_+j-1, 1);
+		zmgs(n_, j-1, v_, v_+j-1, 1);
+
+		return;
 	}
 }
 
@@ -119,6 +121,23 @@ void JDQZ<Matrix>::zortho(int n, int v, int w,
 						  std::complex<double> &znrm)
 {
 	znrm = work_[v].zdot(work_[w]);
+	work_[w].zaxpy(-znrm, work_[v]);
+	s1 = work_[w].norm();
+	
+	double kappa = 100;
+	if (s1 < s0 / kappa) // check for zero vector
+	{
+		// additional orthogonalization
+		s0 = s1;
+		std::complex<double>
+			ztmp = work_[v].zdot(work_[w]);
+		znrm += ztmp;
+		work_[w].zaxpy(-ztmp, work_[v]);
+		s1 = work_[w].norm();
+
+		assert(s1 < s0 / kappa);
+	}
+	return;
 }
 
 

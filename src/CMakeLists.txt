@@ -11,8 +11,7 @@ add_test(test1 test_jdqz)
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND}
                   DEPENDS test_jdqz)
 
-set(CMAKE_CXX_FLAGS "-Wall -std=c++11")
-set(CMAKE_CXX_FLAGS_DEBUG "-g")
+set(CMAKE_CXX_FLAGS "-g -Wall -std=c++11")
 
 #CCACHE
 find_program(CCACHE_FOUND ccache)

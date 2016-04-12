@@ -115,7 +115,10 @@ TEST(Vector, General)
 	
 	EXPECT_EQ(result.real(), 7);
 	EXPECT_EQ(result.imag(), 6);
-	
+
+	std::complex<double> za(4,3);
+	vec1.zaxpy(za, vec2);
+	EXPECT_NEAR(vec1.norm(), 18.1934, 1e-5);
 }
 
 //------------------------------------------------------------------
