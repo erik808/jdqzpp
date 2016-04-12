@@ -117,7 +117,7 @@ void JDQZ<Matrix>::zmgs(int n, int k, int v, int w, int job)
 //==================================================================
 template<typename Matrix>
 void JDQZ<Matrix>::zortho(int n, int v, int w,
-						  double s0, double s1,
+						  double &s0, double &s1,
 						  std::complex<double> &znrm)
 {
 	znrm = work_[v].zdot(work_[w]);

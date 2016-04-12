@@ -106,7 +106,8 @@ private:
 	void zgmres();
 	void zmgs(int n, int k, int v, int w, int job);
 	void zortho(int n, int v, int w,
-				double s0, double s1, std::complex<double> &znrm);
+				double &s0, double &s1,
+				std::complex<double> &znrm);
 };
 
 #endif
