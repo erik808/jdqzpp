@@ -110,7 +110,7 @@ void JDQZ<Matrix>::zmgs(int n, int k, int v, int w, int job)
 	for (int i = 0; i <= k-1; ++i)
 	{
 		s0 = s1;
-		zortho(n, v+i, w, s0, s1, znrm);
+		zortho(n, v+i, w, s0, s1, znrm);		
 	}
 }
 
