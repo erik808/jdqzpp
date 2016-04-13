@@ -45,8 +45,8 @@ void JDQZ<Matrix>::solve()
 	
 	complex targeta = shifta;
 	complex targetb = shiftb;
-	complex zalpha  = shifta;
-	complex zbeta   = shiftb;
+	complex alpha  = shifta;
+	complex beta   = shiftb;
 
 	std::vector<std::vector<complex> > invqkz
 		(ldqkz, std::vector<complex>(ldqkz));
@@ -75,7 +75,7 @@ void JDQZ<Matrix>::solve()
 			{
 				mxmv = 1;
 				// --> we should to pass indices instead of arrays
-				// zgmres(n_, work_[v_+j], work_[d_], m_, deps,
+				//  gmres(n_, work_[v_+j], work_[d_], m_, deps,
 				//        mxmv, zalpha, zbeta, k+1,
 				//        work_[kz_], work_[q_], invqkz, ldqkz,
 				//        ipivqkz, f, work_[u_], work_[tp_] );
@@ -89,39 +89,44 @@ void JDQZ<Matrix>::solve()
 		}
 		j++;
 
-		zmgs(n_, j-1, v_, v_+j-1, 1);
-
+		mgs(n_, j-1, v_, v_+j-1, 1);
+		mgs(n_, k,   q_, v_+j-1, 1);
 		return;
 	}
 }
 
 //==================================================================
 template<typename Matrix>
-void JDQZ<Matrix>::zgmres()
+void JDQZ<Matrix>::gmres()
 {}
 
 //==================================================================
 template<typename Matrix>
-void JDQZ<Matrix>::zmgs(int n, int k, int v, int w, int job)
+void JDQZ<Matrix>::mgs(int n, int k, int v, int w, int job)
 {
 	double s1 = work_[w].norm();
 	double s0;
-	std::complex<double> znrm;
+	std::complex<double> nrm;
 	for (int i = 0; i <= k-1; ++i)
 	{
 		s0 = s1;
-		zortho(n, v+i, w, s0, s1, znrm);
+		ortho(n, v+i, w, s0, s1, nrm);
+	}
+	if (job != 0)
+	{
+		nrm = 1.0 / s1;
+		work_[w].scale(nrm);
 	}
 }
 
 //==================================================================
 template<typename Matrix>
-void JDQZ<Matrix>::zortho(int n, int v, int w,
+void JDQZ<Matrix>::ortho(int n, int v, int w,
 						  double &s0, double &s1,
-						  std::complex<double> &znrm)
+						  std::complex<double> &nrm)
 {
-	znrm = work_[v].zdot(work_[w]);
-	work_[w].zaxpy(-znrm, work_[v]);
+	nrm = work_[v].dot(work_[w]);
+	work_[w].axpy(-nrm, work_[v]);
 	s1 = work_[w].norm();
 	
 	double kappa = 100;
@@ -130,9 +135,9 @@ void JDQZ<Matrix>::zortho(int n, int v, int w,
 		// additional orthogonalization
 		s0 = s1;
 		std::complex<double>
-			ztmp = work_[v].zdot(work_[w]);
-		znrm += ztmp;
-		work_[w].zaxpy(-ztmp, work_[v]);
+			tmp = work_[v].dot(work_[w]);
+		nrm += tmp;
+		work_[w].axpy(-tmp, work_[v]);
 		s1 = work_[w].norm();
 
 		assert(s1 < s0 / kappa);

@@ -103,11 +103,11 @@ public:
 private:
 	void setParameters();
 	void setIndices();
-	void zgmres();
-	void zmgs(int n, int k, int v, int w, int job);
-	void zortho(int n, int v, int w,
-				double &s0, double &s1,
-				std::complex<double> &znrm);
+	void gmres();
+	void mgs(int n, int k, int v, int w, int job);
+	void ortho(int n, int v, int w,
+			   double &s0, double &s1,
+			   std::complex<double> &znrm);
 };
 
 #endif

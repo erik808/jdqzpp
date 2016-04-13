@@ -37,7 +37,7 @@ public:
 			return sqrt(sum);
 		}
 
-	std::complex<double> zdot(TestVector const &other)
+	std::complex<double> dot(TestVector const &other)
 		{
 			assert(this->size() == other.size());
 			std::complex<double> result(0,0);
@@ -46,12 +46,19 @@ public:
 			return result;
 		}
 
-	// this = this + a * x
-	void zaxpy(std::complex<double> za, TestVector const &zx)
+	// this =  a * x + this
+	void axpy(std::complex<double> a, TestVector const &x)
 		{
-			assert(this->size() == zx.size());
-			for (size_t i = 0; i != zx.size(); ++i)
-				(*this)[i] += za * zx[i];
+			assert(this->size() == x.size());
+			for (size_t i = 0; i != x.size(); ++i)
+				(*this)[i] += a * x[i];
+		}
+
+	// this = a * this
+	void scale(std::complex<double> a)
+		{
+			for (auto &el: *this)
+				el *= a;
 		}
 };
 
@@ -111,13 +118,13 @@ TEST(Vector, General)
 	vec2[2].real(1.0); vec2[2].imag(-1.0);
 	vec2[3].real(1.0); vec2[3].imag(2.0);
 
-	std::complex<double> result = vec1.zdot(vec2);
+	std::complex<double> result = vec1.dot(vec2);
 	
 	EXPECT_EQ(result.real(), 7);
 	EXPECT_EQ(result.imag(), 6);
 
 	std::complex<double> za(4,3);
-	vec1.zaxpy(za, vec2);
+	vec1.axpy(za, vec2);
 	EXPECT_NEAR(vec1.norm(), 18.1934, 1e-5);
 }
 
