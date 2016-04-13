@@ -4,7 +4,7 @@
 #include "jdqz_decl.H"
 #include <math.h>
 
-typedef std::complex<double> complex;
+
 
 //==================================================================
 // constructor
@@ -48,8 +48,13 @@ void JDQZ<Matrix>::solve()
 	complex alpha   = shifta;
 	complex beta    = shiftb;
 
-	std::vector<std::vector<complex> > invqkz
-		(ldqkz, std::vector<complex>(ldqkz));
+	complex2D invqkz, ma, zma;
+	MAKE_COMPLEX_2DVEC(invqkz, ldqkz, ldqkz);
+	MAKE_COMPLEX_2DVEC(ma,     ldvs,  ldvs);
+	MAKE_COMPLEX_2DVEC(zma,    ldvs,  ldvs);
+		
+	// std::vector<std::vector<complex> > invqkz
+	// 	(ldqkz, std::vector<complex>(ldqkz));
 
 	std::vector<int> ipivqkz(ldqkz);
 
@@ -105,8 +110,19 @@ void JDQZ<Matrix>::solve()
 		else if (testspace_ == 3) // Harmonic Petrov
 		{
 			jdqzmv(n_, v_+j-1, w_+j-1, tp_,
-				   -std::conj(shiftb), std::conj(shifta));
+				   shifta, shiftb);
 		}
+
+		mgs(n_, j-1, w_, w_+j-1, 1);
+		mgs(n_, k  , z_, w_+j-1, 1);
+
+		// call amul(n, work(1,v+j-1), work(1,av+j-1))
+		mat_.AMUL(work_[v_+j-1], work_[av_+j-1]);
+		
+        // call bmul(n, work(1,v+j-1), work(1,bv+j-1))
+		mat_.BMUL(work_[v_+j-1], work_[bv_+j-1]);
+		
+		makemm(n_, j, w_, av_, ma, zma, ldvs);
 		
 		return;
 	}
@@ -173,6 +189,20 @@ void JDQZ<Matrix>::ortho(int n, int v, int w,
 	return;
 }
 
+//==================================================================
+template<typename Matrix>
+void JDQZ<Matrix>::makemm(int n, int k, int w, int v,
+						  complex2D &m, complex2D &zm, int ldm)
+{
+	for (int i = 0; i <= k-1; ++i)
+		for (int j = 0; j <= k-1; ++j)
+		{
+			if (i == k-1 || j == k-1)
+				m[i][j] = work_[w_+i].dot(work_[v_+j]);
+			zm[i][j] = m[i][j];
+		}
+}
+
 
 //==================================================================
 template<typename Matrix>
@@ -233,7 +263,7 @@ template<typename Matrix>
 void JDQZ<Matrix>::setIndices()
 {
 	//     d   = rhs, these pointers refer to the columns of the workspace
-	d_   = 1;
+	d_   = 0;
 	//     Workspace for jdqzmv
 	tp_  = d_ + 1;
 	//     u   = pointer to Krylov space GMRES(m) or Bi-CSTAB(l)

@@ -4,6 +4,17 @@
 #include <vector>
 #include <complex>
 
+typedef std::complex<double> complex;
+typedef std::vector<std::vector<complex> > complex2D;
+
+#ifndef MAKE_COMPLEX_2DVEC
+# define MAKE_COMPLEX_2DVEC(name, dim1, dim2 )				\
+	{														\
+		name = complex2D									\
+			(dim1, std::vector<complex>(dim2) );			\
+	}
+#endif
+
 // This is (going to be) a templated port of
 // the original JDQZ code by Fokkema and van Gijzen.
 
@@ -85,7 +96,7 @@ class JDQZ
 	// Workspace: two dimensional complex array of size n x lwork
 	std::vector<Vector> work_;
 
-	// Indices referring to columns in the workspace, see setIndices()
+	// Indices referring to Vectors in the workspace, see setIndices()
 	int d_, tp_, u_, v_, w_, av_, bv_, aux_, q_, z_, kz_;
 
 	// Converged eigenvectors if wanted = true, else converged Schur vectors.
@@ -110,6 +121,9 @@ private:
 			   std::complex<double> &znrm);
 	void jdqzmv(int n, int x, int y, int tmp,
 				std::complex<double> alpha, std::complex<double> beta);
+
+	void makemm(int n, int k, int w, int v,
+				complex2D &m, complex2D &zm, int ldm);
 
 	void setParameters();
 	void printParameters();
