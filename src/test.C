@@ -46,12 +46,24 @@ public:
 			return result;
 		}
 
-	// this =  a * x + this
+	// y =  a * x + y
 	void axpy(std::complex<double> a, TestVector const &x)
 		{
 			assert(this->size() == x.size());
 			for (size_t i = 0; i != x.size(); ++i)
 				(*this)[i] += a * x[i];
+		}
+	
+	// y =  a * x + b * y
+	void axpby(std::complex<double> a, TestVector const &x,
+			   std::complex<double> b)
+		{
+			assert(this->size() == x.size());
+			for (size_t i = 0; i != x.size(); ++i)
+			{
+				(*this)[i] *= b;
+				(*this)[i] += a * x[i];
+			}
 		}
 
 	// this = a * this
@@ -123,9 +135,13 @@ TEST(Vector, General)
 	EXPECT_EQ(result.real(), 7);
 	EXPECT_EQ(result.imag(), 6);
 
-	std::complex<double> za(4,3);
-	vec1.axpy(za, vec2);
-	EXPECT_NEAR(vec1.norm(), 18.1934, 1e-5);
+	std::complex<double> a(4,3);
+	vec1.axpy(a, vec2);
+	EXPECT_NEAR(vec1.norm(), 18.1934, 1e-4);
+	
+	std::complex<double> b(2,1);
+	vec1.axpby(a, vec2, b);
+	EXPECT_NEAR(vec1.norm(), 57.3149, 1e-4);
 }
 
 //------------------------------------------------------------------

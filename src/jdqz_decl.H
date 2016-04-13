@@ -95,19 +95,25 @@ class JDQZ
 	Matrix mat_;
 	
 public:
+	
 	JDQZ(Matrix &matrix);
 
 	void solve();
 	int  size() { return n_; }
 
 private:
-	void setParameters();
-	void setIndices();
+	
 	void gmres();
 	void mgs(int n, int k, int v, int w, int job);
 	void ortho(int n, int v, int w,
 			   double &s0, double &s1,
 			   std::complex<double> &znrm);
+	void jdqzmv(int n, int x, int y, int tmp,
+				std::complex<double> alpha, std::complex<double> beta);
+
+	void setParameters();
+	void printParameters();
+	void setIndices();
 };
 
 #endif

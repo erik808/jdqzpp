@@ -45,8 +45,8 @@ void JDQZ<Matrix>::solve()
 	
 	complex targeta = shifta;
 	complex targetb = shiftb;
-	complex alpha  = shifta;
-	complex beta   = shiftb;
+	complex alpha   = shifta;
+	complex beta    = shiftb;
 
 	std::vector<std::vector<complex> > invqkz
 		(ldqkz, std::vector<complex>(ldqkz));
@@ -91,6 +91,23 @@ void JDQZ<Matrix>::solve()
 
 		mgs(n_, j-1, v_, v_+j-1, 1);
 		mgs(n_, k,   q_, v_+j-1, 1);
+		
+		if (testspace_ == 1)      // Standard Petrov
+		{
+			jdqzmv(n_, v_+j-1, w_+j-1, tp_,
+				   -std::conj(shiftb), std::conj(shifta));
+		}
+		else if (testspace_ == 2) // Standard 'variable' Petrov
+		{
+			jdqzmv(n_, v_+j-1, w_+j-1, tp_,
+				   -std::conj(beta), std::conj(alpha));
+		}
+		else if (testspace_ == 3) // Harmonic Petrov
+		{
+			jdqzmv(n_, v_+j-1, w_+j-1, tp_,
+				   -std::conj(shiftb), std::conj(shifta));
+		}
+		
 		return;
 	}
 }
@@ -117,6 +134,17 @@ void JDQZ<Matrix>::mgs(int n, int k, int v, int w, int job)
 		nrm = 1.0 / s1;
 		work_[w].scale(nrm);
 	}
+}
+
+//==================================================================
+template<typename Matrix>
+void JDQZ<Matrix>::jdqzmv(int n, int x, int y, int tmp,
+				std::complex<double> alpha, std::complex<double> beta)
+{
+	// y = beta * A * x - alpha * B * x
+	mat_.AMUL(work_[x], work_[tmp]);
+	mat_.BMUL(work_[x], work_[y]);
+	work_[y].axpby(beta, work_[tmp], -alpha);
 }
 
 //==================================================================
@@ -175,7 +203,12 @@ void JDQZ<Matrix>::setParameters()
 		lwork_ =  4 +  m_  + 5*jmax_ + 3*kmax_;
 	else
 		lwork_ = 10 + 6*l_ + 5*jmax_ + 3*kmax_;
+}
 
+//==================================================================
+template<typename Matrix>
+void JDQZ<Matrix>::printParameters()
+{
 	std::cout << "\nJDQZ Parameters:   " << std::endl;
 	std::cout << " | n_         " << n_ << std::endl;
 	std::cout << " | shift_     " << shift_ << std::endl;
