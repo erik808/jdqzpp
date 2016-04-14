@@ -46,12 +46,11 @@ void JDQZ<Matrix>::solve()
 	complex alpha   = shifta;
 	complex beta    = shiftb;
 
-	complex2D invqkz, ma, zma, mb, zmb;
-	MAKE_COMPLEX_2DVEC(invqkz, ldqkz, ldqkz);
-	MAKE_COMPLEX_2DVEC(ma,     ldvs,  ldvs);
-	MAKE_COMPLEX_2DVEC(zma,    ldvs,  ldvs);
-	MAKE_COMPLEX_2DVEC(mb,     ldvs,  ldvs);
-	MAKE_COMPLEX_2DVEC(zmb,    ldvs,  ldvs);
+	Complex2D invqkz(ldqkz, ldqkz);
+	Complex2D ma(ldvs, ldvs);
+	Complex2D mb(ldvs, ldvs);
+	Complex2D zma(ldvs, ldvs);
+	Complex2D zmb(ldvs, ldvs);
 		
 	// std::vector<std::vector<complex> > invqkz
 	// 	(ldqkz, std::vector<complex>(ldqkz));
@@ -192,47 +191,28 @@ void JDQZ<Matrix>::ortho(int n, int v, int w,
 //==================================================================
 template<typename Matrix>
 void JDQZ<Matrix>::makemm(int n, int k, int w, int v,
-						  complex2D &m, complex2D &zm, int ldm)
+						  Complex2D &m, Complex2D &zm, int ldm)
 {
 	for (int i = 0; i <= k-1; ++i)
 		for (int j = 0; j <= k-1; ++j)
 		{
 			if (i == k-1 || j == k-1)
-				m[i][j] = work_[w+i].dot(work_[v+j]);
-			zm[i][j] = m[i][j];
+				m(i,j) = work_[w+i].dot(work_[v+j]);
+			zm(i,j) = m(i,j);
 		}
 }
 
 //==================================================================
 template<typename Matrix>
-void JDQZ<Matrix>::gegs(complex2D &A, complex2D &B,
-						complex1D &alpha, complex1D &beta,
-						complex2D &VSL, complex2D &VSR)
+void JDQZ<Matrix>::gegs(Complex2D &A, Complex2D &B, 
+						Complex1D &alpha, Complex1D &beta,
+						Complex2D &VSL, Complex2D &VSR)
 {
 	size_t ldvs = A.size();
-	complex1D Acol;
-	MAKE_COMPLEX_1DVEC(Acol, ldvs*ldvs);
-	column_major(A, Acol);
+	Complex1D Acol = std::vector<complex>(ldvs * ldvs);
+
+	// continue here!!
 }
-
-//==================================================================
-template<typename Matrix>
-void JDQZ<Matrix>::column_major(complex2D const &in, complex1D &out)
-{
-	size_t m = in.size();
-	size_t n = in[0].size();
-	size_t N = out.size();
-	assert(N == m * n);
-
-	size_t idx = 0;
-	for (size_t j = 0; j != n; ++j)
-		for (size_t i = 0; i != m; ++i)
-		{
-			out[idx] = in[i][j];
-			idx++;
-		}
-}
-
 
 //==================================================================
 template<typename Matrix>

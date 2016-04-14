@@ -5,23 +5,8 @@
 #include <complex>
 
 typedef std::complex<double> complex;
-typedef std::vector<complex> complex1D;
-typedef std::vector<std::vector<complex> > complex2D;
-
-#ifndef MAKE_COMPLEX_1DVEC
-# define MAKE_COMPLEX_1DVEC(name, dim)			\
-	{											\
-		name = complex1D(dim);					\
-	}
-#endif 
-
-#ifndef MAKE_COMPLEX_2DVEC
-# define MAKE_COMPLEX_2DVEC(name, dim1, dim2 )				\
-	{														\
-		name = complex2D									\
-			(dim1, std::vector<complex>(dim2) );			\
-	}
-#endif
+typedef std::vector<complex> Complex1D;
+class Complex2D;
 
 // This is (going to be) a templated port of
 // the original JDQZ code by Fokkema and van Gijzen.
@@ -131,18 +116,53 @@ private:
 				std::complex<double> alpha, std::complex<double> beta);
 
 	void makemm(int n, int k, int w, int v,
-				complex2D &m, complex2D &zm, int ldm);
+				Complex2D &m, Complex2D &zm, int ldm);
 
 	// our wrapper for lapack's zgegs_
-	void gegs(complex2D &A, complex2D &B,
-			  complex1D &alpha, complex1D &beta,
-			  complex2D &VSL, complex2D &VSR);
+	void gegs(Complex2D &A, Complex2D &B,
+			  Complex1D &alpha, Complex1D &beta,
+			  Complex2D &VSL, Complex2D &VSR);
 
-	void column_major(complex2D const &in, complex1D &out);	   
+	void column_major(Complex2D const &in, Complex1D &out);	   
 
 	void setParameters();
 	void printParameters();
 	void setIndices();
+};
+
+
+// ==================================================================
+// Our own complex matrix class
+//  This will be based around a 1D std::vector<std::complex<double> >
+//  We will overload operator()(int, int) to mimick double indexing
+//   in fortran. 
+
+class Complex2D : public std::vector<std::complex<double> >
+{
+	// row dimension
+	size_t m_;
+	
+	// column dimension
+	size_t n_;
+	
+public:
+
+	// constructor
+	Complex2D(size_t m, size_t n)
+		:
+		std::vector<std::complex<double> >(m*n, 0),
+		m_(m),
+		n_(n)
+		{}
+
+	std::complex<double> &operator()(size_t i, size_t j)
+		{ return (*this)[i+j*m_];}
+
+	std::complex<double> const &operator()(size_t i, size_t j) const
+		{ return (*this)[i+j*m_];}
+	
+	size_t rows() {return m_;}
+	size_t cols() {return n_;}
 };
 
 #endif
