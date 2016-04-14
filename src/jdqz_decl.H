@@ -5,6 +5,7 @@
 #include <complex>
 
 typedef std::complex<double> complex;
+typedef std::vector<complex> complex1D;
 typedef std::vector<std::vector<complex> > complex2D;
 
 #ifndef MAKE_COMPLEX_2DVEC

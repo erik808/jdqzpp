@@ -48,10 +48,12 @@ void JDQZ<Matrix>::solve()
 	complex alpha   = shifta;
 	complex beta    = shiftb;
 
-	complex2D invqkz, ma, zma;
+	complex2D invqkz, ma, zma, mb, zmb;
 	MAKE_COMPLEX_2DVEC(invqkz, ldqkz, ldqkz);
 	MAKE_COMPLEX_2DVEC(ma,     ldvs,  ldvs);
 	MAKE_COMPLEX_2DVEC(zma,    ldvs,  ldvs);
+	MAKE_COMPLEX_2DVEC(mb,     ldvs,  ldvs);
+	MAKE_COMPLEX_2DVEC(zmb,    ldvs,  ldvs);
 		
 	// std::vector<std::vector<complex> > invqkz
 	// 	(ldqkz, std::vector<complex>(ldqkz));
@@ -92,6 +94,7 @@ void JDQZ<Matrix>::solve()
 			{
 			}
 		}
+		
 		j++;
 
 		mgs(n_, j-1, V_, V_+j-1, 1);
@@ -116,14 +119,15 @@ void JDQZ<Matrix>::solve()
 		mgs(n_, j-1, W_, W_+j-1, 1);
 		mgs(n_, k  , Z_, W_+j-1, 1);
 
-		// call amul(n, work(1,v+j-1), work(1,av+j-1))
 		mat_.AMUL(work_[V_+j-1], work_[Av_+j-1]);
-		
-        // call bmul(n, work(1,v+j-1), work(1,bv+j-1))
 		mat_.BMUL(work_[V_+j-1], work_[Bv_+j-1]);
 		
 		makemm(n_, j, W_, Av_, ma, zma, ldvs);
+		makemm(n_, j, W_, Bv_, mb, zmb, ldvs);
+
 		
+		//gegs()
+
 		return;
 	}
 }
@@ -286,6 +290,6 @@ void JDQZ<Matrix>::setIndices()
 	Z_   = Q_ + kmax_;
 	// kz  = pointer to matrix K^{-1}Z_k
 	Kz_  = Z_ + kmax_;
-} 
+}
 
 #endif
