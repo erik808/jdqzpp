@@ -8,6 +8,13 @@ typedef std::complex<double> complex;
 typedef std::vector<complex> complex1D;
 typedef std::vector<std::vector<complex> > complex2D;
 
+#ifndef MAKE_COMPLEX_1DVEC
+# define MAKE_COMPLEX_1DVEC(name, dim)			\
+	{											\
+		name = complex1D(dim);					\
+	}
+#endif 
+
 #ifndef MAKE_COMPLEX_2DVEC
 # define MAKE_COMPLEX_2DVEC(name, dim1, dim2 )				\
 	{														\
@@ -129,9 +136,9 @@ private:
 	// our wrapper for lapack's zgegs_
 	void gegs(complex2D &A, complex2D &B,
 			  complex1D &alpha, complex1D &beta,
-			  complex2D &VSL,
-			  complex2D &VSR,
-			  complex1D &work, int lwork,
+			  complex2D &VSL, complex2D &VSR);
+
+	void column_major(complex2D const &in, complex1D &out);	   
 
 	void setParameters();
 	void printParameters();

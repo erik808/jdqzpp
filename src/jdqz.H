@@ -4,8 +4,6 @@
 #include "jdqz_decl.H"
 #include <math.h>
 
-
-
 //==================================================================
 // constructor
 template<typename Matrix>
@@ -125,7 +123,6 @@ void JDQZ<Matrix>::solve()
 		makemm(n_, j, W_, Av_, ma, zma, ldvs);
 		makemm(n_, j, W_, Bv_, mb, zmb, ldvs);
 
-		
 		//gegs()
 
 		return;
@@ -203,6 +200,36 @@ void JDQZ<Matrix>::makemm(int n, int k, int w, int v,
 			if (i == k-1 || j == k-1)
 				m[i][j] = work_[w+i].dot(work_[v+j]);
 			zm[i][j] = m[i][j];
+		}
+}
+
+//==================================================================
+template<typename Matrix>
+void JDQZ<Matrix>::gegs(complex2D &A, complex2D &B,
+						complex1D &alpha, complex1D &beta,
+						complex2D &VSL, complex2D &VSR)
+{
+	size_t ldvs = A.size();
+	complex1D Acol;
+	MAKE_COMPLEX_1DVEC(Acol, ldvs*ldvs);
+	column_major(A, Acol);
+}
+
+//==================================================================
+template<typename Matrix>
+void JDQZ<Matrix>::column_major(complex2D const &in, complex1D &out)
+{
+	size_t m = in.size();
+	size_t n = in[0].size();
+	size_t N = out.size();
+	assert(N == m * n);
+
+	size_t idx = 0;
+	for (size_t j = 0; j != n; ++j)
+		for (size_t i = 0; i != m; ++i)
+		{
+			out[idx] = in[i][j];
+			idx++;
 		}
 }
 
