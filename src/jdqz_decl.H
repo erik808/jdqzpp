@@ -97,7 +97,7 @@ class JDQZ
 	std::vector<Vector> work_;
 
 	// Indices referring to Vectors in the workspace, see setIndices()
-	int d_, tp_, u_, v_, w_, av_, bv_, aux_, q_, z_, kz_;
+	int D_, Tp_, U_, V_, W_, Av_, Bv_, Aux_, Q_, Z_, Kz_;
 
 	// Converged eigenvectors if wanted = true, else converged Schur vectors.
 	std::vector<Vector> eivec_;

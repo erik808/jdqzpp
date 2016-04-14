@@ -70,7 +70,7 @@ void JDQZ<Matrix>::solve()
 			// and zero imaginary part. Values uniform in [-1,1].
 
 			//--> right now we use ones in the example code for comparison
-			work_[v_].random();
+			work_[V_].random();
 		}
 		else 
 		{
@@ -94,35 +94,35 @@ void JDQZ<Matrix>::solve()
 		}
 		j++;
 
-		mgs(n_, j-1, v_, v_+j-1, 1);
-		mgs(n_, k,   q_, v_+j-1, 1);
+		mgs(n_, j-1, V_, V_+j-1, 1);
+		mgs(n_, k,   Q_, V_+j-1, 1);
 		
 		if (testspace_ == 1)      // Standard Petrov
 		{
-			jdqzmv(n_, v_+j-1, w_+j-1, tp_,
+			jdqzmv(n_, V_+j-1, W_+j-1, Tp_,
 				   -std::conj(shiftb), std::conj(shifta));
 		}
 		else if (testspace_ == 2) // Standard 'variable' Petrov
 		{
-			jdqzmv(n_, v_+j-1, w_+j-1, tp_,
+			jdqzmv(n_, V_+j-1, W_+j-1, Tp_,
 				   -std::conj(beta), std::conj(alpha));
 		}
 		else if (testspace_ == 3) // Harmonic Petrov
 		{
-			jdqzmv(n_, v_+j-1, w_+j-1, tp_,
+			jdqzmv(n_, V_+j-1, W_+j-1, Tp_,
 				   shifta, shiftb);
 		}
 
-		mgs(n_, j-1, w_, w_+j-1, 1);
-		mgs(n_, k  , z_, w_+j-1, 1);
+		mgs(n_, j-1, W_, W_+j-1, 1);
+		mgs(n_, k  , Z_, W_+j-1, 1);
 
 		// call amul(n, work(1,v+j-1), work(1,av+j-1))
-		mat_.AMUL(work_[v_+j-1], work_[av_+j-1]);
+		mat_.AMUL(work_[V_+j-1], work_[Av_+j-1]);
 		
         // call bmul(n, work(1,v+j-1), work(1,bv+j-1))
-		mat_.BMUL(work_[v_+j-1], work_[bv_+j-1]);
+		mat_.BMUL(work_[V_+j-1], work_[Bv_+j-1]);
 		
-		makemm(n_, j, w_, av_, ma, zma, ldvs);
+		makemm(n_, j, W_, Av_, ma, zma, ldvs);
 		
 		return;
 	}
@@ -151,7 +151,6 @@ void JDQZ<Matrix>::mgs(int n, int k, int v, int w, int job)
 		work_[w].scale(nrm);
 	}
 }
-
 //==================================================================
 template<typename Matrix>
 void JDQZ<Matrix>::jdqzmv(int n, int x, int y, int tmp,
@@ -198,7 +197,7 @@ void JDQZ<Matrix>::makemm(int n, int k, int w, int v,
 		for (int j = 0; j <= k-1; ++j)
 		{
 			if (i == k-1 || j == k-1)
-				m[i][j] = work_[w_+i].dot(work_[v_+j]);
+				m[i][j] = work_[w+i].dot(work_[v+j]);
 			zm[i][j] = m[i][j];
 		}
 }
@@ -262,31 +261,31 @@ void JDQZ<Matrix>::printParameters()
 template<typename Matrix>
 void JDQZ<Matrix>::setIndices()
 {
-	//     d   = rhs, these pointers refer to the columns of the workspace
-	d_   = 0;
-	//     Workspace for jdqzmv
-	tp_  = d_ + 1;
-	//     u   = pointer to Krylov space GMRES(m) or Bi-CSTAB(l)
-	u_   = tp_ + 1;
-	//     v   = pointer to search space JDQZ with max dimension jmax
+	// d   = rhs, these pointers refer to the columns of the workspace
+	D_   = 0;
+	// Workspace for jdqzmv
+	Tp_  = D_ + 1;
+	// u   = pointer to Krylov space GMRES(m) or Bi-CSTAB(l)
+	U_   = Tp_ + 1;
+	// v   = pointer to search space JDQZ with max dimension jmax
 	if (method_ == GMRES)
-		v_ = u_ + m_ + 1;
+		V_ = U_ + m_ + 1;
 	else if (method_ == CGSTAB)
-		v_ = u_ + 2*l_ + 6;
-	//     w   = pointer to test subspace JDQZ with max dimension jmax
-	w_   = v_ + jmax_;
-	//     av  = pointer to subspace AV with max dimension jmax
-	av_  = w_ + jmax_;
-	//     bv  = pointer to subspace BV with max dimension jmax
-	bv_  = av_ + jmax_;
-	//     aux =
-	aux_ = bv_ + jmax_;
-	//     q   = pointer to search Schur basis in JDQZ with max dimension kmax
-	q_   = aux_ + jmax_;
-	//     z   = pointer to test Schur basis in JDQZ with max dimension kmax
-	z_   = q_ + kmax_;
-	//     kz  = pointer to matrix K^{-1}Z_k
-	kz_  = z_ + kmax_;
+		V_ = U_ + 2*l_ + 6;
+	// w   = pointer to test subspace JDQZ with max dimension jmax
+	W_   = V_ + jmax_;
+	// av  = pointer to subspace AV with max dimension jmax
+	Av_  = W_ + jmax_;
+	// bv  = pointer to subspace BV with max dimension jmax
+	Bv_  = Av_ + jmax_;
+	// aux =
+	Aux_ = Bv_ + jmax_;
+	// q   = pointer to search Schur basis in JDQZ with max dimension kmax
+	Q_   = Aux_ + jmax_;
+	// z   = pointer to test Schur basis in JDQZ with max dimension kmax
+	Z_   = Q_ + kmax_;
+	// kz  = pointer to matrix K^{-1}Z_k
+	Kz_  = Z_ + kmax_;
 } 
 
 #endif
