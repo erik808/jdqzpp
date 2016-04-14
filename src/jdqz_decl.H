@@ -127,13 +127,11 @@ private:
 				complex2D &m, complex2D &zm, int ldm);
 
 	// our wrapper for lapack's zgegs_
-	// void gegs(char jobvsl, char jobvsr, int n,
-	// 		  complex2D &A, int lda,
-	// 		  complex2D &B, int ldb,
-	// 		  complex1D &alpha, complex1D &beta,
-	// 		  complex2D &VSL, int ldvsl,
-	// 		  complex2D &VSR, int ldvsr,
-	// 		  complex1D &work, int lwork,
+	void gegs(complex2D &A, complex2D &B,
+			  complex1D &alpha, complex1D &beta,
+			  complex2D &VSL,
+			  complex2D &VSR,
+			  complex1D &work, int lwork,
 
 	void setParameters();
 	void printParameters();
