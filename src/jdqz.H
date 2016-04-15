@@ -138,20 +138,52 @@ void JDQZ<Matrix>::solve()
 			// --- Sort the Petrov pairs ---
 			qzsort(targeta, targetb, j, zma, zmb,
 				   vsl, vsr, ldvs, alpha, beta, order_);
+
+			zalpha = zma(0,0);
+            zbeta  = zmb(0,0);
+
+			evcond = sqrt(pow(abs(zalpha),2) + pow(abs(zbeta),2));
+
+			// --- compute new q ---
+			// gemv()
+			
+			
+			
 			return;
 		}
 		
 	}
 }
-
 //==================================================================
+
+extern "C" int select_(int *n, complex *sa, complex *sb,
+					   complex *a, complex *b, int *order);
+
+extern "C" void myexc_(int *n, complex *s, complex *t, complex *z,
+					   complex *q, int *ldz, int *ifst, int *ilst);
+
+//------------------------------------------------------------------
 template<typename Matrix>
 void JDQZ<Matrix>::qzsort(complex ta, complex tb, int k,
 						  Complex2D &s, Complex2D &t, Complex2D &z,
 						  Complex2D &q, int ldz, Complex1D &alpha,
 						  Complex1D &beta, int order)
 {
-	
+	// In this interface we try to be careful
+	// with 1 and 0 based calls...
+	int j = 0;
+	for (int i = 1; i <= k; ++i)
+	{
+		for (j = 1; j <= k; ++j)
+		{
+			alpha[j-1] = s(j-1,j-1);
+			beta[j-1] = t(j-1,j-1);
+		}
+		
+		int N = k-i-1;		
+		j = select_(&N, &ta, &tb, &alpha[i], &beta[i], &order) + i-1;		
+		myexc_(&k, &s[0], &t[0], &z[0], &q[0], &ldz, &j, &i);		
+	}
 }
 
 //==================================================================
@@ -240,7 +272,7 @@ extern "C" void zgegs_(char *JOBVSL, char *JOBVSR, int *N,
 					   complex *WORK, int *LWORK,
 					   double *RWORK, int *INFO);
 
-//==================================================================
+//------------------------------------------------------------------
 // Our wrapper for zgegs_:
 template<typename Matrix>
 void JDQZ<Matrix>::gegs(int N, Complex2D &A, Complex2D &B, 

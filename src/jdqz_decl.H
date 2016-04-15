@@ -127,8 +127,7 @@ private:
 	void qzsort(complex ta, complex tb, int k,
 				Complex2D &s, Complex2D &t, Complex2D &z,
 				Complex2D &q, int ldz, Complex1D &alpha,
-				Complex1D &beta, int order);
-		
+				Complex1D &beta, int order);		
 
 	void setParameters();
 	void printParameters();
