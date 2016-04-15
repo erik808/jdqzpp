@@ -11,7 +11,7 @@ add_test(test1 test_jdqz)
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND}
                   DEPENDS test_jdqz)
 
-set(CMAKE_CXX_FLAGS "-g -Wall -std=c++11")
+set(CMAKE_CXX_FLAGS "-g -Wall -std=c++11 -O0")
 
 #CCACHE
 find_program(CCACHE_FOUND ccache)
@@ -35,3 +35,7 @@ target_link_libraries (test_jdqz ${GTEST_LIBRARIES})
 # Pthread
 find_package(Threads)
 target_link_libraries (test_jdqz ${CMAKE_THREAD_LIBS_INIT})
+
+# Lapack
+find_package(LAPACK)
+target_link_libraries(test_jdqz ${LAPACK_LIBRARIES})

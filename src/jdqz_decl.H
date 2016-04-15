@@ -119,10 +119,11 @@ private:
 				Complex2D &m, Complex2D &zm, int ldm);
 
 	// our wrapper for lapack's zgegs_
-	void gegs(Complex2D &A, Complex2D &B,
+	void gegs(int N, Complex2D &A, Complex2D &B,
 			  Complex1D &alpha, Complex1D &beta,
-			  Complex2D &VSL, Complex2D &VSR);
-
+			  Complex2D &VSL, Complex2D &VSR,
+			  Complex1D &work, std::vector<double> &rwork);
+		
 	void column_major(Complex2D const &in, Complex1D &out);	   
 
 	void setParameters();

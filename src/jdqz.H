@@ -4,6 +4,8 @@
 #include "jdqz_decl.H"
 #include <math.h>
 
+
+
 //==================================================================
 // constructor
 template<typename Matrix>
@@ -26,6 +28,7 @@ JDQZ(Matrix &matrix)
 template<typename Matrix>
 void JDQZ<Matrix>::solve()
 {
+	//-------------------------------------------------------
 	// some initializations
 	int step      = 0;
 	int solvestep = 0;
@@ -43,21 +46,26 @@ void JDQZ<Matrix>::solve()
 	
 	complex targeta = shifta;
 	complex targetb = shiftb;
-	complex alpha   = shifta;
-	complex beta    = shiftb;
+	complex zalpha  = shifta;
+	complex zbeta   = shiftb;
 
+	Complex1D f(ldqkz);
+	Complex1D alpha(ldvs);
+	Complex1D beta(ldvs);	
+	
 	Complex2D invqkz(ldqkz, ldqkz);
 	Complex2D ma(ldvs, ldvs);
 	Complex2D mb(ldvs, ldvs);
 	Complex2D zma(ldvs, ldvs);
 	Complex2D zmb(ldvs, ldvs);
-		
-	// std::vector<std::vector<complex> > invqkz
-	// 	(ldqkz, std::vector<complex>(ldqkz));
+	Complex2D vsl(ldvs, ldvs);
+	Complex2D vsr(ldvs, ldvs);
+	Complex2D zwork(ldvs, ldvs);
+
+	std::vector<double> rwork(3*ldvs);
+	
 
 	std::vector<int> ipivqkz(ldqkz);
-
-	std::vector<complex> f(ldqkz);
 	
 	while (k < kmax_ && step < maxstep_)
 	{
@@ -105,7 +113,7 @@ void JDQZ<Matrix>::solve()
 		else if (testspace_ == 2) // Standard 'variable' Petrov
 		{
 			jdqzmv(n_, V_+j-1, W_+j-1, Tp_,
-				   -std::conj(beta), std::conj(alpha));
+				   -std::conj(zbeta), std::conj(zalpha));
 		}
 		else if (testspace_ == 3) // Harmonic Petrov
 		{
@@ -122,8 +130,8 @@ void JDQZ<Matrix>::solve()
 		makemm(n_, j, W_, Av_, ma, zma, ldvs);
 		makemm(n_, j, W_, Bv_, mb, zmb, ldvs);
 
-		//gegs()
-
+		gegs(j, zma, zmb, alpha, beta, vsl, vsr, zwork, rwork);
+		
 		return;
 	}
 }
@@ -203,15 +211,45 @@ void JDQZ<Matrix>::makemm(int n, int k, int w, int v,
 }
 
 //==================================================================
-template<typename Matrix>
-void JDQZ<Matrix>::gegs(Complex2D &A, Complex2D &B, 
-						Complex1D &alpha, Complex1D &beta,
-						Complex2D &VSL, Complex2D &VSR)
-{
-	size_t ldvs = A.size();
-	Complex1D Acol = std::vector<complex>(ldvs * ldvs);
+// LAPACK zgegs:
+//   compute the left and/or right Schur vectors (VSL and VSR)
+extern "C" void zgegs_(char *JOBVSL, char *JOBVSR, int *N,
+					   complex *A, int *LDA,
+					   complex *B, int *LDB,
+					   complex *ALPHA, complex *BETA,
+					   complex *VSL, int *LDVSL,
+					   complex *VSR, int *LDVSR,
+					   complex *WORK, int *LWORK,
+					   double *RWORK, int *INFO);
 
-	// continue here!!
+//==================================================================
+// Our wrapper for zgegs_:
+template<typename Matrix>
+void JDQZ<Matrix>::gegs(int N, Complex2D &A, Complex2D &B, 
+						Complex1D &alpha, Complex1D &beta,
+						Complex2D &VSL, Complex2D &VSR,
+						Complex1D &work, std::vector<double> &rwork)
+{
+	int  LDA   = A.rows();
+	int  LDB   = B.rows();
+	int  LDVSL = VSL.rows();
+	int  LDVSR = VSR.rows();
+	int  LWORK = work.size();
+	int  INFO  = 0;
+
+	assert(LDA == LDB);
+	assert(LDA == LDVSL);
+	assert(LDA == LDVSR);
+	assert(LWORK >= std::max(1, 2*N));
+	assert(rwork.size() >= std::max(1, 3*N));
+	
+	char JOBVSL = 'V'; // compute left  Schur vectors
+	char JOBVSR = 'V'; // compute right Schur vectors
+
+	// calling lapack
+	zgegs_(&JOBVSL, &JOBVSR, &N, &A[0], &LDA, &B[0], &LDB,
+		   &alpha[0], &beta[0], &VSL[0], &LDVSL, &VSR[0], &LDVSR,
+		   &work[0], &LWORK, &rwork[0], &INFO);	
 }
 
 //==================================================================
