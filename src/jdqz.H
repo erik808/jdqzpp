@@ -4,8 +4,6 @@
 #include "jdqz_decl.H"
 #include <math.h>
 
-typedef std::complex<double> complex;
-
 //==================================================================
 // constructor
 template<typename Matrix>
@@ -45,11 +43,17 @@ void JDQZ<Matrix>::solve()
 	
 	complex targeta = shifta;
 	complex targetb = shiftb;
-	complex zalpha  = shifta;
-	complex zbeta   = shiftb;
+	complex alpha   = shifta;
+	complex beta    = shiftb;
 
-	std::vector<std::vector<complex> > invqkz
-		(ldqkz, std::vector<complex>(ldqkz));
+	Complex2D invqkz(ldqkz, ldqkz);
+	Complex2D ma(ldvs, ldvs);
+	Complex2D mb(ldvs, ldvs);
+	Complex2D zma(ldvs, ldvs);
+	Complex2D zmb(ldvs, ldvs);
+		
+	// std::vector<std::vector<complex> > invqkz
+	// 	(ldqkz, std::vector<complex>(ldqkz));
 
 	std::vector<int> ipivqkz(ldqkz);
 
@@ -65,7 +69,7 @@ void JDQZ<Matrix>::solve()
 			// and zero imaginary part. Values uniform in [-1,1].
 
 			//--> right now we use ones in the example code for comparison
-			work_[v_].random();
+			work_[V_].random();
 		}
 		else 
 		{
@@ -75,7 +79,7 @@ void JDQZ<Matrix>::solve()
 			{
 				mxmv = 1;
 				// --> we should to pass indices instead of arrays
-				// zgmres(n_, work_[v_+j], work_[d_], m_, deps,
+				//  gmres(n_, work_[v_+j], work_[d_], m_, deps,
 				//        mxmv, zalpha, zbeta, k+1,
 				//        work_[kz_], work_[q_], invqkz, ldqkz,
 				//        ipivqkz, f, work_[u_], work_[tp_] );
@@ -87,9 +91,38 @@ void JDQZ<Matrix>::solve()
 			{
 			}
 		}
+		
 		j++;
 
-		zmgs(n_, j-1, v_, v_+j-1, 1);
+		mgs(n_, j-1, V_, V_+j-1, 1);
+		mgs(n_, k,   Q_, V_+j-1, 1);
+		
+		if (testspace_ == 1)      // Standard Petrov
+		{
+			jdqzmv(n_, V_+j-1, W_+j-1, Tp_,
+				   -std::conj(shiftb), std::conj(shifta));
+		}
+		else if (testspace_ == 2) // Standard 'variable' Petrov
+		{
+			jdqzmv(n_, V_+j-1, W_+j-1, Tp_,
+				   -std::conj(beta), std::conj(alpha));
+		}
+		else if (testspace_ == 3) // Harmonic Petrov
+		{
+			jdqzmv(n_, V_+j-1, W_+j-1, Tp_,
+				   shifta, shiftb);
+		}
+
+		mgs(n_, j-1, W_, W_+j-1, 1);
+		mgs(n_, k  , Z_, W_+j-1, 1);
+
+		mat_.AMUL(work_[V_+j-1], work_[Av_+j-1]);
+		mat_.BMUL(work_[V_+j-1], work_[Bv_+j-1]);
+		
+		makemm(n_, j, W_, Av_, ma, zma, ldvs);
+		makemm(n_, j, W_, Bv_, mb, zmb, ldvs);
+
+		//gegs()
 
 		return;
 	}
@@ -97,31 +130,46 @@ void JDQZ<Matrix>::solve()
 
 //==================================================================
 template<typename Matrix>
-void JDQZ<Matrix>::zgmres()
+void JDQZ<Matrix>::gmres()
 {}
 
 //==================================================================
 template<typename Matrix>
-void JDQZ<Matrix>::zmgs(int n, int k, int v, int w, int job)
+void JDQZ<Matrix>::mgs(int n, int k, int v, int w, int job)
 {
 	double s1 = work_[w].norm();
 	double s0;
-	std::complex<double> znrm;
+	std::complex<double> nrm;
 	for (int i = 0; i <= k-1; ++i)
 	{
 		s0 = s1;
-		zortho(n, v+i, w, s0, s1, znrm);		
+		ortho(n, v+i, w, s0, s1, nrm);
 	}
+	if (job != 0)
+	{
+		nrm = 1.0 / s1;
+		work_[w].scale(nrm);
+	}
+}
+//==================================================================
+template<typename Matrix>
+void JDQZ<Matrix>::jdqzmv(int n, int x, int y, int tmp,
+				std::complex<double> alpha, std::complex<double> beta)
+{
+	// y = beta * A * x - alpha * B * x
+	mat_.AMUL(work_[x], work_[tmp]);
+	mat_.BMUL(work_[x], work_[y]);
+	work_[y].axpby(beta, work_[tmp], -alpha);
 }
 
 //==================================================================
 template<typename Matrix>
-void JDQZ<Matrix>::zortho(int n, int v, int w,
+void JDQZ<Matrix>::ortho(int n, int v, int w,
 						  double &s0, double &s1,
-						  std::complex<double> &znrm)
+						  std::complex<double> &nrm)
 {
-	znrm = work_[v].zdot(work_[w]);
-	work_[w].zaxpy(-znrm, work_[v]);
+	nrm = work_[v].dot(work_[w]);
+	work_[w].axpy(-nrm, work_[v]);
 	s1 = work_[w].norm();
 	
 	double kappa = 100;
@@ -130,9 +178,9 @@ void JDQZ<Matrix>::zortho(int n, int v, int w,
 		// additional orthogonalization
 		s0 = s1;
 		std::complex<double>
-			ztmp = work_[v].zdot(work_[w]);
-		znrm += ztmp;
-		work_[w].zaxpy(-ztmp, work_[v]);
+			tmp = work_[v].dot(work_[w]);
+		nrm += tmp;
+		work_[w].axpy(-tmp, work_[v]);
 		s1 = work_[w].norm();
 
 		assert(s1 < s0 / kappa);
@@ -140,6 +188,31 @@ void JDQZ<Matrix>::zortho(int n, int v, int w,
 	return;
 }
 
+//==================================================================
+template<typename Matrix>
+void JDQZ<Matrix>::makemm(int n, int k, int w, int v,
+						  Complex2D &m, Complex2D &zm, int ldm)
+{
+	for (int i = 0; i <= k-1; ++i)
+		for (int j = 0; j <= k-1; ++j)
+		{
+			if (i == k-1 || j == k-1)
+				m(i,j) = work_[w+i].dot(work_[v+j]);
+			zm(i,j) = m(i,j);
+		}
+}
+
+//==================================================================
+template<typename Matrix>
+void JDQZ<Matrix>::gegs(Complex2D &A, Complex2D &B, 
+						Complex1D &alpha, Complex1D &beta,
+						Complex2D &VSL, Complex2D &VSR)
+{
+	size_t ldvs = A.size();
+	Complex1D Acol = std::vector<complex>(ldvs * ldvs);
+
+	// continue here!!
+}
 
 //==================================================================
 template<typename Matrix>
@@ -170,7 +243,12 @@ void JDQZ<Matrix>::setParameters()
 		lwork_ =  4 +  m_  + 5*jmax_ + 3*kmax_;
 	else
 		lwork_ = 10 + 6*l_ + 5*jmax_ + 3*kmax_;
+}
 
+//==================================================================
+template<typename Matrix>
+void JDQZ<Matrix>::printParameters()
+{
 	std::cout << "\nJDQZ Parameters:   " << std::endl;
 	std::cout << " | n_         " << n_ << std::endl;
 	std::cout << " | shift_     " << shift_ << std::endl;
@@ -194,31 +272,31 @@ void JDQZ<Matrix>::setParameters()
 template<typename Matrix>
 void JDQZ<Matrix>::setIndices()
 {
-	//     d   = rhs, these pointers refer to the columns of the workspace
-	d_   = 1;
-	//     Workspace for jdqzmv
-	tp_  = d_ + 1;
-	//     u   = pointer to Krylov space GMRES(m) or Bi-CSTAB(l)
-	u_   = tp_ + 1;
-	//     v   = pointer to search space JDQZ with max dimension jmax
+	// d   = rhs, these pointers refer to the columns of the workspace
+	D_   = 0;
+	// Workspace for jdqzmv
+	Tp_  = D_ + 1;
+	// u   = pointer to Krylov space GMRES(m) or Bi-CSTAB(l)
+	U_   = Tp_ + 1;
+	// v   = pointer to search space JDQZ with max dimension jmax
 	if (method_ == GMRES)
-		v_ = u_ + m_ + 1;
+		V_ = U_ + m_ + 1;
 	else if (method_ == CGSTAB)
-		v_ = u_ + 2*l_ + 6;
-	//     w   = pointer to test subspace JDQZ with max dimension jmax
-	w_   = v_ + jmax_;
-	//     av  = pointer to subspace AV with max dimension jmax
-	av_  = w_ + jmax_;
-	//     bv  = pointer to subspace BV with max dimension jmax
-	bv_  = av_ + jmax_;
-	//     aux =
-	aux_ = bv_ + jmax_;
-	//     q   = pointer to search Schur basis in JDQZ with max dimension kmax
-	q_   = aux_ + jmax_;
-	//     z   = pointer to test Schur basis in JDQZ with max dimension kmax
-	z_   = q_ + kmax_;
-	//     kz  = pointer to matrix K^{-1}Z_k
-	kz_  = z_ + kmax_;
-} 
+		V_ = U_ + 2*l_ + 6;
+	// w   = pointer to test subspace JDQZ with max dimension jmax
+	W_   = V_ + jmax_;
+	// av  = pointer to subspace AV with max dimension jmax
+	Av_  = W_ + jmax_;
+	// bv  = pointer to subspace BV with max dimension jmax
+	Bv_  = Av_ + jmax_;
+	// aux =
+	Aux_ = Bv_ + jmax_;
+	// q   = pointer to search Schur basis in JDQZ with max dimension kmax
+	Q_   = Aux_ + jmax_;
+	// z   = pointer to test Schur basis in JDQZ with max dimension kmax
+	Z_   = Q_ + kmax_;
+	// kz  = pointer to matrix K^{-1}Z_k
+	Kz_  = Z_ + kmax_;
+}
 
 #endif

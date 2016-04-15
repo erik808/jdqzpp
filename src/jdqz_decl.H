@@ -4,6 +4,10 @@
 #include <vector>
 #include <complex>
 
+typedef std::complex<double> complex;
+typedef std::vector<complex> Complex1D;
+class Complex2D;
+
 // This is (going to be) a templated port of
 // the original JDQZ code by Fokkema and van Gijzen.
 
@@ -85,8 +89,8 @@ class JDQZ
 	// Workspace: two dimensional complex array of size n x lwork
 	std::vector<Vector> work_;
 
-	// Indices referring to columns in the workspace, see setIndices()
-	int d_, tp_, u_, v_, w_, av_, bv_, aux_, q_, z_, kz_;
+	// Indices referring to Vectors in the workspace, see setIndices()
+	int D_, Tp_, U_, V_, W_, Av_, Bv_, Aux_, Q_, Z_, Kz_;
 
 	// Converged eigenvectors if wanted = true, else converged Schur vectors.
 	std::vector<Vector> eivec_;
@@ -95,19 +99,70 @@ class JDQZ
 	Matrix mat_;
 	
 public:
+	
 	JDQZ(Matrix &matrix);
 
 	void solve();
 	int  size() { return n_; }
 
 private:
+	
+	void gmres();
+	void mgs(int n, int k, int v, int w, int job);
+	void ortho(int n, int v, int w,
+			   double &s0, double &s1,
+			   std::complex<double> &znrm);
+	void jdqzmv(int n, int x, int y, int tmp,
+				std::complex<double> alpha, std::complex<double> beta);
+
+	void makemm(int n, int k, int w, int v,
+				Complex2D &m, Complex2D &zm, int ldm);
+
+	// our wrapper for lapack's zgegs_
+	void gegs(Complex2D &A, Complex2D &B,
+			  Complex1D &alpha, Complex1D &beta,
+			  Complex2D &VSL, Complex2D &VSR);
+
+	void column_major(Complex2D const &in, Complex1D &out);	   
+
 	void setParameters();
+	void printParameters();
 	void setIndices();
-	void zgmres();
-	void zmgs(int n, int k, int v, int w, int job);
-	void zortho(int n, int v, int w,
-				double &s0, double &s1,
-				std::complex<double> &znrm);
+};
+
+
+// ==================================================================
+// Our own complex matrix class
+//  This will be based around a 1D std::vector<std::complex<double> >
+//  We will overload operator()(int, int) to mimick double indexing
+//   in fortran. 
+
+class Complex2D : public std::vector<std::complex<double> >
+{
+	// row dimension
+	size_t m_;
+	
+	// column dimension
+	size_t n_;
+	
+public:
+
+	// constructor
+	Complex2D(size_t m, size_t n)
+		:
+		std::vector<std::complex<double> >(m*n, 0),
+		m_(m),
+		n_(n)
+		{}
+
+	std::complex<double> &operator()(size_t i, size_t j)
+		{ return (*this)[i+j*m_];}
+
+	std::complex<double> const &operator()(size_t i, size_t j) const
+		{ return (*this)[i+j*m_];}
+	
+	size_t rows() {return m_;}
+	size_t cols() {return n_;}
 };
 
 #endif
