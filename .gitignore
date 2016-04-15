@@ -8,6 +8,7 @@
 !Makefile.*
 !src/
 !doc/
+!jdqz_tools/
 
 !*.m
 !*.xml
