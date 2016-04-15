@@ -123,8 +123,12 @@ private:
 			  Complex1D &alpha, Complex1D &beta,
 			  Complex2D &VSL, Complex2D &VSR,
 			  Complex1D &work, std::vector<double> &rwork);
+
+	void qzsort(complex ta, complex tb, int k,
+				Complex2D &s, Complex2D &t, Complex2D &z,
+				Complex2D &q, int ldz, Complex1D &alpha,
+				Complex1D &beta, int order);
 		
-	void column_major(Complex2D const &in, Complex1D &out);	   
 
 	void setParameters();
 	void printParameters();

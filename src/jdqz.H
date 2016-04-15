@@ -131,9 +131,27 @@ void JDQZ<Matrix>::solve()
 		makemm(n_, j, W_, Bv_, mb, zmb, ldvs);
 
 		gegs(j, zma, zmb, alpha, beta, vsl, vsr, zwork, rwork);
+
+		bool attempt = true;
+		while (attempt)
+		{
+			// --- Sort the Petrov pairs ---
+			qzsort(targeta, targetb, j, zma, zmb,
+				   vsl, vsr, ldvs, alpha, beta, order_);
+			return;
+		}
 		
-		return;
 	}
+}
+
+//==================================================================
+template<typename Matrix>
+void JDQZ<Matrix>::qzsort(complex ta, complex tb, int k,
+						  Complex2D &s, Complex2D &t, Complex2D &z,
+						  Complex2D &q, int ldz, Complex1D &alpha,
+						  Complex1D &beta, int order)
+{
+	
 }
 
 //==================================================================
