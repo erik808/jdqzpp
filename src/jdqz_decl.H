@@ -106,7 +106,7 @@ public:
 	int  size() { return n_; }
 
 private:
-	
+
 	void gmres();
 	void mgs(int n, int k, int v, int w, int job);
 	void ortho(int n, int v, int w,
@@ -118,7 +118,7 @@ private:
 	void makemm(int n, int k, int w, int v,
 				Complex2D &m, Complex2D &zm, int ldm);
 
-	// our wrapper for lapack's zgegs_
+	// Our wrapper for lapack's zgegs_
 	void gegs(int N, Complex2D &A, Complex2D &B,
 			  Complex1D &alpha, Complex1D &beta,
 			  Complex2D &VSL, Complex2D &VSR,
@@ -129,6 +129,21 @@ private:
 				Complex2D &q, int ldz, Complex1D &alpha,
 				Complex1D &beta, int order);		
 
+	// Matrix-Vector multiplication, type TRANS = N 
+	void gemv(int m, int n, complex alpha, int A,
+			  complex *X, complex beta, int Y);
+
+	// Matrix-Vector multiplication, type TRANS = C 
+	void gemv(int m, int n, complex alpha, int A, int lda,
+			  int X, complex beta, Complex2D &Y); // TODO
+	
+	// Matrix-Matrix multiplication
+	void gemm(); // TODO
+	
+	void makeqkz(int n, int k, int Q, int Kq, Complex2D &qkz,
+				 Complex2D &invqkz, int ldqkz,
+				 std::vector<int> &ipivqkz) ;
+	
 	void setParameters();
 	void printParameters();
 	void setIndices();
@@ -164,7 +179,7 @@ public:
 
 	std::complex<double> const &operator()(size_t i, size_t j) const
 		{ return (*this)[i+j*m_];}
-	
+
 	size_t rows() {return m_;}
 	size_t cols() {return n_;}
 };

@@ -53,7 +53,6 @@ void JDQZ<Matrix>::solve()
 	Complex1D alpha(ldvs);
 	Complex1D beta(ldvs);	
 	
-	Complex2D invqkz(ldqkz, ldqkz);
 	Complex2D ma(ldvs, ldvs);
 	Complex2D mb(ldvs, ldvs);
 	Complex2D zma(ldvs, ldvs);
@@ -62,8 +61,10 @@ void JDQZ<Matrix>::solve()
 	Complex2D vsr(ldvs, ldvs);
 	Complex2D zwork(ldvs, ldvs);
 
+	Complex2D mqkz(ldqkz, ldqkz);
+	Complex2D invqkz(ldqkz, ldqkz);
+
 	std::vector<double> rwork(3*ldvs);
-	
 
 	std::vector<int> ipivqkz(ldqkz);
 	
@@ -145,15 +146,70 @@ void JDQZ<Matrix>::solve()
 			evcond = sqrt(pow(abs(zalpha),2) + pow(abs(zbeta),2));
 
 			// --- compute new q ---
-			// gemv()
-			
-			
+			// Q(:,k) = V_ * VSR(:,0)
+			gemv(n_, j, 1.0, V_, &vsr(0,0), 0.0, Q_+k);			
+
+			// --- orthogonalize new q ---
+			mgs(n_, k, Q_, Q_+k, 1);
+
+			// --- compute new z ---
+			// Z(:,k) = W_ * VSL(:,0)
+			gemv(n_, j, 1.0, W_, &vsl(0,0), 0.0, Z_+k);
+
+			// --- orthogonalize new z ---
+			mgs(n_, k, Z_, Z_+k, 1);
+
+			// --- make new qkz ---
+			work_[Kz_+k] = work_[Z_+k];
+			mat_.PRECON(work_[Kz_+k]);
+			makeqkz(n_, k+1, Q_, Kz_, mqkz, invqkz, ldqkz, ipivqkz);
 			
 			return;
 		}
-		
 	}
 }
+//==================================================================
+extern "C" void zgetrf_(int* M, int *N, complex *A,
+						int *LDA, int *IPIV, int *INFO);
+
+//------------------------------------------------------------------
+template<typename Matrix>
+void JDQZ<Matrix>::makeqkz(int n, int k, int Q, int Kq, Complex2D &qkz,
+						   Complex2D &invqkz, int ldqkz,
+						   std::vector<int> &ipiv)
+{
+	for (int i = 0; i != k; ++i)
+		for (int j = 0; j != k; ++j)
+		{
+			if (i == k-1 || j == k-1)
+			{
+				qkz(i,j) = work_[Q+i].dot(work_[Kq+j]);
+			}
+			invqkz(i,j) = qkz(i,j);			
+		}
+
+	int info = 0;
+	zgetrf_(&k, &k, &invqkz[0], &ldqkz, &ipiv[0], &info);
+}
+
+//==================================================================
+template<typename Matrix>
+void JDQZ<Matrix>::gemv(int m, int n, complex alpha, int A,
+						complex *X, complex beta, int Y)
+{
+	work_[Y].scale(beta);
+	for (int i = 0; i != n; ++i)
+		work_[Y].axpy(alpha * X[i], work_[A+i]);
+}
+
+//==================================================================
+template<typename Matrix>
+void JDQZ<Matrix>::gemv(int m, int n, complex alpha, int A, int lda,
+						int X, complex beta, Complex2D &Y)
+{
+	
+}
+
 //==================================================================
 
 extern "C" int select_(int *n, complex *sa, complex *sb,
