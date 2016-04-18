@@ -163,7 +163,6 @@ void JDQZ<Matrix>::solve()
 			work_[Kz_+k] = work_[Z_+k];
 			mat_.PRECON(work_[Kz_+k]);
 			makeqkz(n_, k+1, Q_, Kz_, mqkz, invqkz, ldqkz, ipivqkz);
-			
 			return;
 		}
 	}
