@@ -5,7 +5,8 @@
 #include <complex>
 
 typedef std::complex<double> complex;
-typedef std::vector<complex> Complex1D;
+
+class Complex1D;
 class Complex2D;
 
 // This is (going to be) a templated port of
@@ -115,6 +116,10 @@ private:
 			   Complex2D &invqkz, int ldqkz, std::vector<int> &ipivqkz,
 			   Complex1D &f, int u, int tp);
 	
+	void psolve(int n, int x, int nq, int q, int kz,
+				Complex2D &invqkz, int ldqkz,
+				std::vector<int> ipiv, Complex1D &f);
+	
 	void mgs(int n, int k, int v, int w, int job);
 	
 	void ortho(int n, int v, int w,
@@ -143,8 +148,8 @@ private:
 			  complex *X, complex beta, int Y);
 
 	// Matrix-Vector multiplication, type TRANS = C 
-	void gemv(int m, int n, complex alpha, int A, int lda,
-			  int X, complex beta, Complex2D &Y); // TODO
+	void gemv(int m, int n, complex alpha, int A,
+			  int X, complex beta, Complex1D &Y); // TODO
 	
 	// Matrix-Matrix multiplication
 	void gemm(); // TODO
@@ -158,6 +163,26 @@ private:
 	void setIndices();
 };
 
+// ==================================================================
+// Our own inherited complex vector class
+//  This will be based around a 1D std::vector<std::complex<double> >
+
+class Complex1D : public std::vector<std::complex<double> >
+{
+public: 
+	// constructor
+	Complex1D(size_t n)
+		:
+		std::vector<std::complex<double> >(n, 0)
+		{}
+
+	void scale(complex za)
+		{
+			for (auto &el: *this)
+				el *= za;
+		}
+};
+
 
 // ==================================================================
 // Our own complex matrix class
@@ -166,8 +191,8 @@ private:
 //   in fortran. 
 
 class Complex2D : public std::vector<std::complex<double> >
-{
 	// row dimension
+{
 	size_t m_;
 	
 	// column dimension

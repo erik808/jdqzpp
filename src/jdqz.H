@@ -53,6 +53,7 @@ void JDQZ<Matrix>::solve()
 	Complex1D f(ldqkz);
 	Complex1D alpha(ldvs);
 	Complex1D beta(ldvs);	
+	Complex1D zwork(4*ldvs);
 	
 	Complex2D ma(ldvs, ldvs);
 	Complex2D mb(ldvs, ldvs);
@@ -60,7 +61,6 @@ void JDQZ<Matrix>::solve()
 	Complex2D zmb(ldvs, ldvs);
 	Complex2D vsl(ldvs, ldvs);
 	Complex2D vsr(ldvs, ldvs);
-	Complex2D zwork(ldvs, ldvs);
 
 	Complex2D mqkz(ldqkz, ldqkz);
 	Complex2D invqkz(ldqkz, ldqkz);
@@ -223,6 +223,7 @@ void JDQZ<Matrix>::makeqkz(int n, int k, int Q, int Kq, Complex2D &qkz,
 }
 
 //==================================================================
+// Y = alpha*A*X + beta*Y
 template<typename Matrix>
 void JDQZ<Matrix>::gemv(int m, int n, complex alpha, int A,
 						complex *X, complex beta, int Y)
@@ -233,11 +234,14 @@ void JDQZ<Matrix>::gemv(int m, int n, complex alpha, int A,
 }
 
 //==================================================================
+// Y = alpha*A**H*X + beta*Y
 template<typename Matrix>
-void JDQZ<Matrix>::gemv(int m, int n, complex alpha, int A, int lda,
-						int X, complex beta, Complex2D &Y)
+void JDQZ<Matrix>::gemv(int m, int n, complex alpha, int A,
+						int X, complex beta, Complex1D &Y)
 {
-	
+	Y.scale(beta);
+	for (int i = 0; i != n; ++i)
+		Y[i] = work_[A].dot(work_[X]);
 }
 
 //==================================================================
@@ -276,7 +280,7 @@ void JDQZ<Matrix>::qzsort(complex ta, complex tb, int k,
 template<typename Matrix>
 void JDQZ<Matrix>::gmres(int n, int x, int r, int mxm, double eps, int mxmv,
 						 complex alpha, complex beta, int k, int kz, int q,
-						 Complex2D &invqkz, int ldqkz, std::vector<int> &ipivqkz,
+						 Complex2D &invqkz, int ldqkz, std::vector<int> &ipiv,
 						 Complex1D &f, int u, int tp)
 {
 	int maxm = 100;
@@ -284,6 +288,35 @@ void JDQZ<Matrix>::gmres(int n, int x, int r, int mxm, double eps, int mxmv,
 
 	// --- initialize first residue ---
 	work_[x].zero();
+	work_[r].scale(-1.0);
+	psolve(n, r, k, q, kz, invqkz, ldqkz, ipiv, f);
+
+	// ----->  continue here!
+	
+}
+
+//==================================================================
+extern "C" void zgetrs_(char* TRANS, int *N, int *NRHS, complex *A,
+						int *LDA, int *IPIV, complex *B,
+						int *LDB, int *INFO);
+
+//------------------------------------------------------------------
+template<typename Matrix>
+void JDQZ<Matrix>::psolve(int n, int x, int nq, int q, int kz,
+						  Complex2D &invqkz, int ldqkz,
+						  std::vector<int> ipiv, Complex1D &f)
+{
+	mat_.PRECON(work_[x]);
+
+	gemv(n, nq, 1.0, q, x, 0.0, f);
+
+	char trans = 'N';
+	int  nrhs = 1;
+	int  info = 0;
+	zgetrs_(&trans, &nq, &nrhs, &invqkz[0], &ldqkz,
+			&ipiv[0], &f[0], &ldqkz, &info);
+
+	gemv(n, nq, -1.0, kz, &f[0], 1.0, x);
 }
 
 //==================================================================
