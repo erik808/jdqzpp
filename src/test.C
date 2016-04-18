@@ -15,12 +15,6 @@ public:
 	TestVector(size_t n, double num) :
 		std::vector<std::complex<double> >(n,num) {}		   
 	
-	// for now we let this set the real parts to 1
-	void random()
-		{
-			for (auto &el: *this)
-				el = 1;
-		}
 
 	friend std::ostream &operator<<(std::ostream &out, TestVector const &vec)
 		{
@@ -71,6 +65,20 @@ public:
 		{
 			for (auto &el: *this)
 				el *= a;
+		}
+
+	// this = 0
+	void zero()
+		{
+			for (auto &el: *this)
+				el = 0;
+		}
+	
+	// for now we let this set the real parts to 1
+	void random()
+		{
+			for (auto &el: *this)
+				el = 1;
 		}
 };
 

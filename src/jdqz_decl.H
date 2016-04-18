@@ -30,10 +30,13 @@ class JDQZ
 
 	// The shift / value near which the eigenvalues are sought
 	std::complex<double> shift_;
-	
-	double tol_;
 
-	// Tracking parameter	
+	// Tolerance of the eigensolutions,
+	// $\| \beta \BA\Bx - \alpha \BB\Bx \| / | \alpha/\beta | < \epsilon$
+	double eps_;
+
+	// Tracking parameter:
+	//  take it small to avoid missing eigensolutions (~1e-9)
 	double lock_;
 
 	// Number of wanted eigensolutions, on output: number of converged eigenpairs
@@ -106,12 +109,18 @@ public:
 	int  size() { return n_; }
 
 private:
-
-	void gmres();
+	
+	void gmres(int n, int x, int r, int mxm, double deps, int mxmv,
+			   complex alpha, complex beta, int k, int kz, int q,
+			   Complex2D &invqkz, int ldqkz, std::vector<int> &ipivqkz,
+			   Complex1D &f, int u, int tp);
+	
 	void mgs(int n, int k, int v, int w, int job);
+	
 	void ortho(int n, int v, int w,
 			   double &s0, double &s1,
 			   std::complex<double> &znrm);
+	
 	void jdqzmv(int n, int x, int y, int tmp,
 				std::complex<double> alpha, std::complex<double> beta);
 

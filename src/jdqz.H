@@ -38,7 +38,8 @@ void JDQZ<Matrix>::solve()
 	int ldvs      = 50;
 	int ldqkz     = ldvs;
 
-	double deps   = 1.0;		
+	double deps   = 1.0;
+	double rnrm   = 0.0;
 
 	complex evcond( sqrt(pow(abs(shift_),2) + 1.0));
 	complex shifta  = shift_ / evcond;
@@ -67,6 +68,10 @@ void JDQZ<Matrix>::solve()
 	std::vector<double> rwork(3*ldvs);
 
 	std::vector<int> ipivqkz(ldqkz);
+
+	// a few flags...
+	bool ok    = true;
+	bool found = false;
 	
 	while (k < kmax_ && step < maxstep_)
 	{
@@ -87,17 +92,15 @@ void JDQZ<Matrix>::solve()
 			if (j < jmin_)
 			{
 				mxmv = 1;
-				// --> we should to pass indices instead of arrays
-				//  gmres(n_, work_[v_+j], work_[d_], m_, deps,
-				//        mxmv, zalpha, zbeta, k+1,
-				//        work_[kz_], work_[q_], invqkz, ldqkz,
-				//        ipivqkz, f, work_[u_], work_[tp_] );
+				gmres(n_, V_+j, D_, m_, deps, mxmv, zalpha, zbeta, k+1,
+					  Kz_, Q_, invqkz, ldqkz, ipivqkz, f, U_, Tp_);
+				// -- > continue here
 			}
 			else if (method_ == GMRES)
 			{
 			}
  			else if (method_ == CGSTAB)
-			{
+			{ 
 			}
 		}
 		
@@ -163,7 +166,35 @@ void JDQZ<Matrix>::solve()
 			work_[Kz_+k] = work_[Z_+k];
 			mat_.PRECON(work_[Kz_+k]);
 			makeqkz(n_, k+1, Q_, Kz_, mqkz, invqkz, ldqkz, ipivqkz);
-			return;
+
+			// --- compute new (right) residual= beta Aq - alpha Bq ---
+			jdqzmv(n_, Q_+k, D_, Tp_, zalpha, zbeta);
+			
+			// --- orthogonalize this vector to Z ---
+			mgs(n_, k, Z_, D_, 0);
+
+			rnrm = work_[D_].norm() / evcond.real();
+
+			if (rnrm < lock_ && ok)
+			{
+				targeta = zalpha;
+				targetb = zbeta;
+				ok = false;
+			}
+
+			found   = ((rnrm < eps_ && j > 1) || k == kmax_ - 1);
+			attempt = found;
+
+			if (found)
+			{
+				// do stuff
+				return;
+			}
+			else if (j == jmax_)
+			{
+				// do other stuff
+				return;
+			}			
 		}
 	}
 }
@@ -243,8 +274,17 @@ void JDQZ<Matrix>::qzsort(complex ta, complex tb, int k,
 
 //==================================================================
 template<typename Matrix>
-void JDQZ<Matrix>::gmres()
-{}
+void JDQZ<Matrix>::gmres(int n, int x, int r, int mxm, double eps, int mxmv,
+						 complex alpha, complex beta, int k, int kz, int q,
+						 Complex2D &invqkz, int ldqkz, std::vector<int> &ipivqkz,
+						 Complex1D &f, int u, int tp)
+{
+	int maxm = 100;
+	assert(mxm < maxm);
+
+	// --- initialize first residue ---
+	work_[x].zero();
+}
 
 //==================================================================
 template<typename Matrix>
@@ -367,7 +407,7 @@ void JDQZ<Matrix>::setParameters()
 	//-------------------------------------------------------
 	// temporarily hardcoded parameters 
 	shift_     = std::complex<double>(0,0);
-	tol_       = 1e-9;
+	eps_       = 1e-9;
 	kmax_      = 5;
 	jmax_      = 20;
 	jmin_      = 10;
@@ -395,7 +435,7 @@ void JDQZ<Matrix>::printParameters()
 	std::cout << "\nJDQZ Parameters:   " << std::endl;
 	std::cout << " | n_         " << n_ << std::endl;
 	std::cout << " | shift_     " << shift_ << std::endl;
-	std::cout << " | tol_       " << tol_ << std::endl;
+	std::cout << " | eps_       " << eps_ << std::endl;
 	std::cout << " | kmax_      " << kmax_ << std::endl;
 	std::cout << " | jmax_      " << jmax_ << std::endl;
 	std::cout << " | jmin_      " << jmin_ << std::endl;
