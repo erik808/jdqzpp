@@ -101,11 +101,13 @@ class JDQZ
 
 	// Matrix wrapper
 	Matrix mat_;
+
+	bool testing_;
 	
 public:
 	
 	JDQZ(Matrix &matrix);
-
+	
 	void solve();
 	int  size() { return n_; }
 

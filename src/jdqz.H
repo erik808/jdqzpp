@@ -4,15 +4,14 @@
 #include "jdqz_decl.H"
 #include <math.h>
 
-
-
 //==================================================================
 // constructor
 template<typename Matrix>
 JDQZ<Matrix>::
 JDQZ(Matrix &matrix)
 	:
-	mat_(matrix)
+	mat_(matrix),
+	testing_(false)
 {
 	// set parameters
 	setParameters();
@@ -20,9 +19,9 @@ JDQZ(Matrix &matrix)
 	// setup workspace
 	work_ = std::vector<Vector>(lwork_, Vector(n_));
 
+	// set the indices for specific components in the workspace
 	setIndices();
 }
-
 
 //==================================================================
 template<typename Matrix>
@@ -81,7 +80,7 @@ void JDQZ<Matrix>::solve()
 		{
 			// Initialize search and test space with random real part
 			// and zero imaginary part. Values uniform in [-1,1].
-
+			// TODO
 			//--> right now we use ones in the example code for comparison
 			work_[V_].random();
 		}
@@ -98,9 +97,11 @@ void JDQZ<Matrix>::solve()
 			}
 			else if (method_ == GMRES)
 			{
+				// TODO
 			}
  			else if (method_ == CGSTAB)
-			{ 
+			{
+				// TODO
 			}
 		}
 		
@@ -127,7 +128,7 @@ void JDQZ<Matrix>::solve()
 
 		mgs(n_, j-1, W_, W_+j-1, 1);
 		mgs(n_, k  , Z_, W_+j-1, 1);
-
+		
 		mat_.AMUL(work_[V_+j-1], work_[Av_+j-1]);
 		mat_.BMUL(work_[V_+j-1], work_[Bv_+j-1]);
 		
@@ -184,15 +185,18 @@ void JDQZ<Matrix>::solve()
 
 			found   = ((rnrm < eps_ && j > 1) || k == kmax_ - 1);
 			attempt = found;
-
+			
 			if (found)
 			{
-				// do stuff
+				k++;
+				// hier verder!
+				// TODO
 				return;
 			}
 			else if (j == jmax_)
 			{
-				// do other stuff
+				// hier verder!				
+				// TODO
 				return;
 			}			
 		}
@@ -259,7 +263,7 @@ void JDQZ<Matrix>::qzsort(complex ta, complex tb, int k,
 						  Complex2D &q, int ldz, Complex1D &alpha,
 						  Complex1D &beta, int order)
 {
-	// In this interface we try to be careful
+	// In this interface we should be careful
 	// with 1 and 0 based calls...
 	int j = 0;
 	for (int i = 1; i <= k; ++i)
@@ -270,8 +274,8 @@ void JDQZ<Matrix>::qzsort(complex ta, complex tb, int k,
 			beta[j-1] = t(j-1,j-1);
 		}
 		
-		int N = k-i-1;		
-		j = select_(&N, &ta, &tb, &alpha[i], &beta[i], &order) + i-1;		
+		int N = k-i+1;		
+		j = select_(&N, &ta, &tb, &alpha[i-1], &beta[i-1], &order) + i-1;		
 		myexc_(&k, &s[0], &t[0], &z[0], &q[0], &ldz, &j, &i);		
 	}
 }

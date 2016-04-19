@@ -187,7 +187,7 @@ TEST(JDQZ, Run)
 	TestMatrix testmat(size);
 	JDQZ<TestMatrix> jdqz(testmat);
 	jdqz.solve();
-} 
+}
 
 //------------------------------------------------------------------
 int main(int argc, char **argv)
