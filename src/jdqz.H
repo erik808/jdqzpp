@@ -284,6 +284,11 @@ extern "C" void zrot_(int *N, complex *CX, int *INCX,
 extern "C" void zlartg_(complex *F, complex *G, double *CS,
 						complex *SN, complex *R);
 
+extern "C" void ztrsv_(char const *UPLO, char const *TRANS, char const *DIAG,
+					   int *N, complex *A, int *LDA, complex *X, int *INCX);
+
+extern "C" void zcopy_(int *N, complex *ZX, int *INCX, complex *ZY,	int *INCY);
+
 //------------------------------------------------------------------
 template<typename Matrix>
 void JDQZ<Matrix>::gmres(int n, int x, int r, int mxm, double eps, int mxmv,
@@ -330,7 +335,7 @@ void JDQZ<Matrix>::gmres(int n, int x, int r, int mxm, double eps, int mxmv,
 
 		// --- inner loop ---
 		m = -1;
-		while(nmv < mxmv && m < mxm && rnrm > eps1)
+		while(nmv < mxmv && m < mxm-1 && rnrm > eps1)
 		{
 			m  = m + 1;
 			m1 = m + 1;					
@@ -358,11 +363,26 @@ void JDQZ<Matrix>::gmres(int n, int x, int r, int mxm, double eps, int mxmv,
 
 			zrot_(&one, &rs[m], &one, &rs[m1], &one, &c[m], &s[m]);
 			rnrm = abs(rs[m1]);
-			return;
 		}
-		return;
+
+		// --- compute approximate solution x ---
+		int M = m+1; // move to 1-based for lapack and gemv
+		zcopy_(&M, &rs[0], &one, &y[0], &one);
+		ztrsv_("U", "N", "N", &M, &hh[0], &maxm, &y[0], &one);
+		
+		gemv(n, M, 1.0, v, &y[0], 1.0, x);
+		
+		//--- compute residual for restart ---
+		jdqzmv(x, v+1, tp, alpha, beta);
+		psolve(n, v+1, k, q, kz, invqkz, ldqkz, ipiv, f);
+		work_[v] = work_[r];
+		work_[v].axpy(-1.0, work_[v+1]);
+
+		rnrm = work_[v].norm();
 	}
-	
+	// --- return ---
+	eps  = rnrm / rnrm0;
+	mxmv = nmv;
 }
 
 //==================================================================
@@ -387,7 +407,6 @@ void JDQZ<Matrix>::psolve(int n, int x, int nq, int q, int kz,
 			&ipiv[0], &f[0], &ldqkz, &info);
 
 	gemv(n, nq, -1.0, kz, &f[0], 1.0, x);
-	
 }
 
 //==================================================================
