@@ -111,17 +111,17 @@ void JDQZ<Matrix>::solve()
 		
 		if (testspace_ == 1)      // Standard Petrov
 		{
-			jdqzmv(n_, V_+j-1, W_+j-1, Tp_,
+			jdqzmv(V_+j-1, W_+j-1, Tp_,
 				   -std::conj(shiftb), std::conj(shifta));
 		}
 		else if (testspace_ == 2) // Standard 'variable' Petrov
 		{
-			jdqzmv(n_, V_+j-1, W_+j-1, Tp_,
+			jdqzmv(V_+j-1, W_+j-1, Tp_,
 				   -std::conj(zbeta), std::conj(zalpha));
 		}
 		else if (testspace_ == 3) // Harmonic Petrov
 		{
-			jdqzmv(n_, V_+j-1, W_+j-1, Tp_,
+			jdqzmv(V_+j-1, W_+j-1, Tp_,
 				   shifta, shiftb);
 		}
 
@@ -168,7 +168,7 @@ void JDQZ<Matrix>::solve()
 			makeqkz(n_, k+1, Q_, Kz_, mqkz, invqkz, ldqkz, ipivqkz);
 
 			// --- compute new (right) residual= beta Aq - alpha Bq ---
-			jdqzmv(n_, Q_+k, D_, Tp_, zalpha, zbeta);
+			jdqzmv(Q_+k, D_, Tp_, zalpha, zbeta);
 			
 			// --- orthogonalize this vector to Z ---
 			mgs(n_, k, Z_, D_, 0);
@@ -277,21 +277,91 @@ void JDQZ<Matrix>::qzsort(complex ta, complex tb, int k,
 }
 
 //==================================================================
+// Lapack stuff:
+extern "C" void zrot_(int *N, complex *CX, int *INCX,
+					  complex *CY, int *INCY, double *C, complex *S);
+
+extern "C" void zlartg_(complex *F, complex *G, double *CS,
+						complex *SN, complex *R);
+
+//------------------------------------------------------------------
 template<typename Matrix>
 void JDQZ<Matrix>::gmres(int n, int x, int r, int mxm, double eps, int mxmv,
 						 complex alpha, complex beta, int k, int kz, int q,
 						 Complex2D &invqkz, int ldqkz, std::vector<int> &ipiv,
-						 Complex1D &f, int u, int tp)
+						 Complex1D &f, int v, int tp)
 {
+	// -- some initializations --- 
 	int maxm = 100;
+	int nmv  = 0;
+	int m, m1;
+	int one  = 1;
+	
 	assert(mxm < maxm);
+
+	complex ztmp, zdotc;
+	complex rcs(0,0);
+
+	std::vector<double> c(maxm);
+	
+	Complex1D rs(maxm);
+	Complex1D  s(maxm);
+	Complex1D  y(maxm);
+
+	Complex2D hh(maxm, maxm-1);
 
 	// --- initialize first residue ---
 	work_[x].zero();
 	work_[r].scale(-1.0);
 	psolve(n, r, k, q, kz, invqkz, ldqkz, ipiv, f);
 
-	// ----->  continue here!
+	double rnrm0 = work_[r].norm();
+	double rnrm  = rnrm0;
+	double eps1  = eps * rnrm;
+
+	work_[v] = work_[r];
+
+	// -- restart loop ---
+	while (nmv < mxmv && rnrm > eps1) 
+	{
+		ztmp = 1.0 / rnrm;
+		work_[v].scale(ztmp);
+		rs[0] = rnrm;
+
+		// --- inner loop ---
+		m = -1;
+		while(nmv < mxmv && m < mxm && rnrm > eps1)
+		{
+			m  = m + 1;
+			m1 = m + 1;					
+			jdqzmv(v+m, v+m1, tp, alpha, beta);
+			psolve(n, v+m1, k, q, kz, invqkz, ldqkz, ipiv, f);
+
+			nmv++;
+			for (int i = 0; i <= m; ++i)
+			{
+				ztmp = work_[v+i].dot(work_[v+m1]);
+				hh(i,m) = ztmp;
+				work_[v+m1].axpy(-ztmp, work_[v+i]);
+			}
+			ztmp     = work_[v+m1].norm();
+			hh(m1,m) = ztmp;
+			work_[v+m1].scale(1.0 / ztmp);
+
+			for (int i = 0; i <= m-1; ++i)
+				zrot_(&one, &hh(i,m), &one, &hh(i+1,m), &one, &c[i], &s[i]);
+
+			zlartg_(&hh(m,m), &hh(m1,m), &c[m], &s[m], &rcs);
+			hh(m,m)  = rcs;
+			hh(m1,m) = 0;
+			rs[m1]   = 0;
+
+			zrot_(&one, &rs[m], &one, &rs[m1], &one, &c[m], &s[m]);
+			rnrm = abs(rs[m1]);
+			return;
+		}
+		return;
+	}
 	
 }
 
@@ -317,6 +387,7 @@ void JDQZ<Matrix>::psolve(int n, int x, int nq, int q, int kz,
 			&ipiv[0], &f[0], &ldqkz, &info);
 
 	gemv(n, nq, -1.0, kz, &f[0], 1.0, x);
+	
 }
 
 //==================================================================
@@ -339,8 +410,9 @@ void JDQZ<Matrix>::mgs(int n, int k, int v, int w, int job)
 }
 //==================================================================
 template<typename Matrix>
-void JDQZ<Matrix>::jdqzmv(int n, int x, int y, int tmp,
-				std::complex<double> alpha, std::complex<double> beta)
+void JDQZ<Matrix>::jdqzmv(int x, int y, int tmp,
+						  std::complex<double> alpha,
+						  std::complex<double> beta)
 {
 	// y = beta * A * x - alpha * B * x
 	mat_.AMUL(work_[x], work_[tmp]);
@@ -493,7 +565,7 @@ void JDQZ<Matrix>::setIndices()
 	// Workspace for jdqzmv
 	Tp_  = D_ + 1;
 	// u   = pointer to Krylov space GMRES(m) or Bi-CSTAB(l)
-	U_   = Tp_ + 1;
+	U_   = Tp_ + 1; 
 	// v   = pointer to search space JDQZ with max dimension jmax
 	if (method_ == GMRES)
 		V_ = U_ + m_ + 1;

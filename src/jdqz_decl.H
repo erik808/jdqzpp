@@ -126,8 +126,9 @@ private:
 			   double &s0, double &s1,
 			   std::complex<double> &znrm);
 	
-	void jdqzmv(int n, int x, int y, int tmp,
-				std::complex<double> alpha, std::complex<double> beta);
+	void jdqzmv(int x, int y, int tmp,
+				std::complex<double> alpha,
+				std::complex<double> beta);
 
 	void makemm(int n, int k, int w, int v,
 				Complex2D &m, Complex2D &zm, int ldm);
@@ -165,7 +166,7 @@ private:
 
 // ==================================================================
 // Our own inherited complex vector class
-//  This will be based around a 1D std::vector<std::complex<double> >
+//  This will be based around a 1D std::vector<std::complex<double> >.
 
 class Complex1D : public std::vector<std::complex<double> >
 {
@@ -185,10 +186,12 @@ public:
 
 
 // ==================================================================
-// Our own complex matrix class
-//  This will be based around a 1D std::vector<std::complex<double> >
+// Our own complex matrix class.
+//  This will be based around a 1D std::vector<std::complex<double> >.
 //  We will overload operator()(int, int) to mimick double indexing
-//   in fortran. 
+//  in fortran. The data will be stored in column major form, which
+//  simplifies the coupling to lapack: if array is a Complex2D object
+//  you can pass &array[0] to a lapack routine expecting a matrix.
 
 class Complex2D : public std::vector<std::complex<double> >
 	// row dimension
