@@ -5,17 +5,20 @@
 #include <iostream>
 #include <assert.h>
 
+
+
 class TestVector : public std::vector<std::complex<double> >
 {
 public:
 
 	TestVector(size_t n) :
-		std::vector<std::complex<double> >(n){}		   
+		std::vector<std::complex<double> >(n, 0){}		   
 
 	TestVector(size_t n, double num) :
 		std::vector<std::complex<double> >(n,num) {}		   
 	
-
+	static std::vector<double> norms;
+	
 	friend std::ostream &operator<<(std::ostream &out, TestVector const &vec)
 		{
 			for (auto &el: vec)
@@ -28,6 +31,9 @@ public:
 			double sum = 0.0;
 			for (auto &el: *this)
 				sum += pow(el.real(), 2) + pow(el.imag(), 2);
+
+			norms.push_back(sqrt(sum)); // keeping track for testing purposes
+			std::cout << norms.size()-1 << ": " << sqrt(sum) << '\n';
 			return sqrt(sum);
 		}
 
@@ -82,6 +88,7 @@ public:
 		}
 };
 
+std::vector<double> TestVector::norms = std::vector<double>();
  
 //------------------------------------------------------------------
 // Example matrix wrapper
@@ -183,10 +190,20 @@ TEST(JDQZ, Setup)
 //------------------------------------------------------------------
 TEST(JDQZ, Run)
 {
+	TestVector::norms.clear();
 	size_t size = 100;
 	TestMatrix testmat(size);
 	JDQZ<TestMatrix> jdqz(testmat);
 	jdqz.solve();
+	
+	// testing rnrm in the inner "attempt" loop
+	EXPECT_NEAR(TestVector::norms[7],   7.370188617854, 1e-9);
+	EXPECT_NEAR(TestVector::norms[20],  0.808903713729, 1e-9);
+	EXPECT_NEAR(TestVector::norms[35],  0.671927897667, 1e-9);
+	EXPECT_NEAR(TestVector::norms[52],  0.467505198259, 1e-9);
+	EXPECT_NEAR(TestVector::norms[196], 0.777032215617, 1e-9);
+	EXPECT_NEAR(TestVector::norms[238], 0.158442752163, 1e-9);
+	EXPECT_NEAR(TestVector::norms[282], 1.1112136E-004, 1e-9);	
 }
 
 //------------------------------------------------------------------

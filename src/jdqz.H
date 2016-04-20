@@ -17,8 +17,8 @@ JDQZ(Matrix &matrix)
 	setParameters();
 
 	// setup workspace
-	work_ = std::vector<Vector>(lwork_, Vector(n_));
-
+	work_ = std::vector<Vector>(lwork_, Vector(n_, 0.0));
+	
 	// set the indices for specific components in the workspace
 	setIndices();
 }
@@ -97,14 +97,15 @@ void JDQZ<Matrix>::solve()
 			}
 			else if (method_ == GMRES)
 			{
-				// TODO
+				mxmv = m_;
+				gmres(n_, V_+j, D_, m_, deps, mxmv, zalpha, zbeta, k+1,
+					  Kz_, Q_, invqkz, ldqkz, ipivqkz, f, U_, Tp_);
 			}
  			else if (method_ == CGSTAB)
 			{
 				// TODO
 			}
-		}
-		
+		}		
 		j++;
 
 		mgs(n_, j-1, V_, V_+j-1, 1);
@@ -173,8 +174,8 @@ void JDQZ<Matrix>::solve()
 			
 			// --- orthogonalize this vector to Z ---
 			mgs(n_, k, Z_, D_, 0);
-
-			rnrm = work_[D_].norm() / evcond.real();
+			
+			rnrm = work_[D_].norm() / evcond.real();			
 
 			if (rnrm < lock_ && ok)
 			{
@@ -189,7 +190,7 @@ void JDQZ<Matrix>::solve()
 			if (found)
 			{
 				k++;
-				// hier verder!
+				
 				// TODO
 				return;
 			}
@@ -480,6 +481,9 @@ void JDQZ<Matrix>::makemm(int n, int k, int w, int v,
 			if (i == k-1 || j == k-1)
 				m(i,j) = work_[w+i].dot(work_[v+j]);
 			zm(i,j) = m(i,j);
+			
+			assert(std::isnan(zm(i,j).real()) == false);
+			assert(std::isnan(zm(i,j).imag()) == false);
 		}
 }
 
