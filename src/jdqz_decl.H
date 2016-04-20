@@ -90,7 +90,7 @@ class JDQZ
 	// Size of workspace
 	int lwork_;
 	
-	// Workspace: two dimensional complex array of size n x lwork
+	// The workspace: a std::vector of templated Vectors.
 	std::vector<Vector> work_;
 
 	// Indices referring to Vectors in the workspace, see setIndices()
@@ -146,20 +146,28 @@ private:
 				Complex2D &q, int ldz, Complex1D &alpha,
 				Complex1D &beta, int order);		
 
-	// Matrix-Vector multiplication, type TRANS = N 
+	// Matrix-Vector multiplication, type TRANS = N
+	// Here we assume A and Y are in the workspace and use
+	// members of the templated Vector type.
+	// Y = alpha*A*X + beta*Y
 	void gemv(int m, int n, complex alpha, int A,
 			  complex *X, complex beta, int Y);
 
-	// Matrix-Vector multiplication, type TRANS = C 
+	// Matrix-Vector multiplication, type TRANS = C
+	// Here we assume A and X are in the workspace.
+	// Y = alpha*A**H*X + beta*Y
 	void gemv(int m, int n, complex alpha, int A,
 			  int X, complex beta, Complex1D &Y); // TODO
 	
 	// Matrix-Matrix multiplication
-	void gemm(); // TODO
+	// Here we assume A and C are in the workspace.
+	// C = alpha*A*B + beta*C
+	void gemm(int m, int n, int k, complex alpha, int A,
+			  complex *B, int ldb, complex beta, int C);
 	
 	void makeqkz(int n, int k, int Q, int Kq, Complex2D &qkz,
 				 Complex2D &invqkz, int ldqkz,
-				 std::vector<int> &ipivqkz) ;
+				 std::vector<int> &ipivqkz);
 	
 	void setParameters();
 	void printParameters();
@@ -169,7 +177,6 @@ private:
 // ==================================================================
 // Our own inherited complex vector class
 //  This will be based around a 1D std::vector<std::complex<double> >.
-
 class Complex1D : public std::vector<std::complex<double> >
 {
 public: 

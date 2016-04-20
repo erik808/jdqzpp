@@ -53,6 +53,8 @@ void JDQZ<Matrix>::solve()
 	Complex1D alpha(ldvs);
 	Complex1D beta(ldvs);	
 	Complex1D zwork(4*ldvs);
+	Complex1D aconv(ldvs);
+	Complex1D bconv(ldvs);
 	
 	Complex2D ma(ldvs, ldvs);
 	Complex2D mb(ldvs, ldvs);
@@ -189,14 +191,25 @@ void JDQZ<Matrix>::solve()
 			
 			if (found)
 			{
+				// --- increase the number of found evs ---
 				k++;
+
+				// --- store the eigenvalue ---				
+				aconv[k-1] = zalpha;
+				bconv[k-1] = zbeta;
+
+				// --- reset solvestep
+				solvestep = 0;
+
+				if (k == kmax_) break; // break from this while loop
+				
+				gemm(n_, j-1, j, 1.0, V_, &vsr(0,1), ldvs, 0.0, Aux_);
 				
 				// TODO
 				return;
 			}
 			else if (j == jmax_)
 			{
-				// hier verder!				
 				// TODO
 				return;
 			}			
@@ -247,6 +260,20 @@ void JDQZ<Matrix>::gemv(int m, int n, complex alpha, int A,
 	Y.scale(beta);
 	for (int i = 0; i != n; ++i)
 		Y[i] = work_[A].dot(work_[X]);
+}
+
+//==================================================================
+// C = alpha*A*B + beta*C
+template<typename Matrix>
+void JDQZ<Matrix>::gemm(int m, int n, int k, complex alpha, int A,
+						complex *B, int ldb, complex beta, int C)
+{
+	for (int j = 0; j != n; ++j)
+	{
+		work_[C+j].scale(beta);
+		for (int i = 0; i != k; ++i)			
+			work_[C+j].axpy(alpha * B[i+ldb*j], work_[A+i]);
+	}
 }
 
 //==================================================================
