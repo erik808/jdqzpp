@@ -204,6 +204,7 @@ void JDQZ<Matrix>::solve()
 				if (k == kmax_) break; // break from this while loop
 				
 				gemm(n_, j-1, j, 1.0, V_, &vsr(0,1), ldvs, 0.0, Aux_);
+
 				
 				// TODO
 				return;
@@ -553,7 +554,9 @@ void JDQZ<Matrix>::gegs(int N, Complex2D &A, Complex2D &B,
 	// calling lapack
 	zgegs_(&JOBVSL, &JOBVSR, &N, &A[0], &LDA, &B[0], &LDB,
 		   &alpha[0], &beta[0], &VSL[0], &LDVSL, &VSR[0], &LDVSR,
-		   &work[0], &LWORK, &rwork[0], &INFO);	
+		   &work[0], &LWORK, &rwork[0], &INFO);
+
+	assert(INFO == 0);
 }
 
 //==================================================================
