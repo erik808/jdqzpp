@@ -36,6 +36,7 @@ void JDQZ<Matrix>::solve()
 	int mxmv      = 0;
 	int ldvs      = 50;
 	int ldqkz     = ldvs;
+	int itmp      = 0;
 
 	double deps   = 1.0;
 	double rnrm   = 0.0;
@@ -202,8 +203,15 @@ void JDQZ<Matrix>::solve()
 				solvestep = 0;
 				
 				if (k == kmax_) break; // break from this while loop
-		
+				
 				gemm(n_, j-1, j, 1.0, V_, &vsr(0,1), ldvs, 0.0, Aux_);
+				
+				// -- swapping indices... --
+				itmp = V_;
+				V_   = Aux_;
+				Aux_ = itmp;
+				
+				gemm(n_, j-1, j, 1.0, Av_, &vsr(0,1), ldvs, 0.0, Aux_);			
 								
 				// TODO
 				return;
