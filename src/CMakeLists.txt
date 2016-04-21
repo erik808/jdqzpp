@@ -7,7 +7,7 @@ enable_language(Fortran)
 get_filename_component(Fortran_COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
 
 if (Fortran_COMPILER_NAME MATCHES "gfortran.*") #gfortran
-  set (CMAKE_Fortran_FLAGS "-g -u -O1")
+  set (CMAKE_Fortran_FLAGS "-g -u -O0")
 elseif (Fortran_COMPILER_NAME MATCHES "ifort.*") #ifort
   set (CMAKE_Fortran_FLAGS "")
 endif (Fortran_COMPILER_NAME MATCHES "gfortran.*")

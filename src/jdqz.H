@@ -193,19 +193,18 @@ void JDQZ<Matrix>::solve()
 			{
 				// --- increase the number of found evs ---
 				k++;
-
+				
 				// --- store the eigenvalue ---				
 				aconv[k-1] = zalpha;
 				bconv[k-1] = zbeta;
-
+				
 				// --- reset solvestep
 				solvestep = 0;
-
+				
 				if (k == kmax_) break; // break from this while loop
-				
+		
 				gemm(n_, j-1, j, 1.0, V_, &vsr(0,1), ldvs, 0.0, Aux_);
-
-				
+								
 				// TODO
 				return;
 			}
@@ -213,7 +212,7 @@ void JDQZ<Matrix>::solve()
 			{
 				// TODO
 				return;
-			}			
+			}
 		}
 	}
 }

@@ -39,6 +39,11 @@ c
          if (abs(f1).gt.abs(f2)) tlts = .false.
          c1 = f1*s(k,k) - f2*t(k,k)
          c2 = f1*s(k,k+1) - f2*t(k,k+1)
+
+c     for testing, making sure c1 and c2 are negative zero...
+         if (abs(c1).lt.1d-13.and.realpart(c1).gt.0) c1 = -c1 
+         if (abs(c2).lt.1d-13.and.realpart(c2).gt.0) c2 = -c2 
+         
          call zlartg (c2, c1, cs, sn, r)
          call zrot (k+1, s(1,k+1), 1, s(1,k), 1, cs, sn)
          call zrot (k+1, t(1,k+1), 1, t(1,k), 1, cs, sn)
@@ -50,6 +55,11 @@ c
             c1 = t(k,k)
             c2 = t(k+1,k) 
          endif
+
+c     for testing, making sure c1 and c2 are negative zero...
+         if (abs(c1).lt.1d-13.and.realpart(c1).gt.0) c1 = -c1 
+         if (abs(c2).lt.1d-13.and.realpart(c2).gt.0) c2 = -c2 
+
          call zlartg (c1, c2, cs, sn, r)
          call zrot (n-k+1, s(k,k), ldz, s(k+1,k), ldz, cs, sn)
          call zrot (n-k+1, t(k,k), ldz, t(k+1,k), ldz, cs, sn)

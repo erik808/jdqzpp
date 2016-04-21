@@ -193,7 +193,6 @@ public:
 		}
 };
 
-
 // ==================================================================
 // Our own complex matrix class.
 //  This will be based around a 1D std::vector<std::complex<double> >.

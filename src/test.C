@@ -18,6 +18,8 @@ public:
 		std::vector<std::complex<double> >(n,num) {}		   
 	
 	static std::vector<double> norms;
+	static std::vector<complex> alphas;
+	static std::vector<complex> betas;
 	
 	friend std::ostream &operator<<(std::ostream &out, TestVector const &vec)
 		{
@@ -33,7 +35,7 @@ public:
 				sum += pow(el.real(), 2) + pow(el.imag(), 2);
 
 			norms.push_back(sqrt(sum)); // keeping track for testing purposes
-			std::cout << norms.size()-1 << ": " << sqrt(sum) << '\n';
+			std::cout << "norm: " << norms.size()-1 << ": " << sqrt(sum) << '\n';
 			return sqrt(sum);
 		}
 
@@ -64,6 +66,11 @@ public:
 				(*this)[i] *= b;
 				(*this)[i] += a * x[i];
 			}
+
+			alphas.push_back(-b); // for testing
+			betas.push_back(a);
+			std::cout << "alpha: " << alphas.size()-1 << ": " << -b << '\n';
+			std::cout << "beta:  "  << betas.size()-1 << ": " << a  << '\n';
 		}
 
 	// this = a * this
@@ -89,6 +96,8 @@ public:
 };
 
 std::vector<double> TestVector::norms = std::vector<double>();
+std::vector<complex> TestVector::alphas = std::vector<complex>();
+std::vector<complex> TestVector::betas = std::vector<complex>();
  
 //------------------------------------------------------------------
 // Example matrix wrapper
@@ -191,6 +200,9 @@ TEST(JDQZ, Setup)
 TEST(JDQZ, Run)
 {
 	TestVector::norms.clear();
+	TestVector::alphas.clear();
+	TestVector::betas.clear();
+	
 	size_t size = 100;
 	TestMatrix testmat(size);
 	JDQZ<TestMatrix> jdqz(testmat);
@@ -203,12 +215,16 @@ TEST(JDQZ, Run)
 	EXPECT_NEAR(TestVector::norms[52],  0.467505198259, 1e-9);
 	EXPECT_NEAR(TestVector::norms[196], 0.777032215617, 1e-9);
 	EXPECT_NEAR(TestVector::norms[238], 0.158442752163, 1e-9);
-	EXPECT_NEAR(TestVector::norms[282], 1.1112136E-004, 1e-9);	
+	EXPECT_NEAR(TestVector::norms[282], 1.1112136E-004, 1e-9);
+
+	// testing alphas and betas used in jdqzmv and accessible in axpby
+	EXPECT_NEAR(TestVector::alphas[10].real(), -4.963569309883, 1e-9);
+	EXPECT_NEAR(TestVector::betas[10].real(),  -0.201467923094, 1e-9);
 }
 
 //------------------------------------------------------------------
 int main(int argc, char **argv)
-{	
+{
 	::testing::InitGoogleTest(&argc, argv);
 	int out = RUN_ALL_TESTS();
 	std::cout << "TEST exit code " << out << std::endl;
