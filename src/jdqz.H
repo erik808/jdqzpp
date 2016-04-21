@@ -24,6 +24,13 @@ JDQZ(Matrix &matrix)
 }
 
 //==================================================================
+extern "C" void zlacpy_(char const *UPLO, int *M, int *N, complex *A,
+						int *LDA, complex *B, int *LDB);
+
+extern "C" void zlaset_(char const *UPLO, int *M, int *N,
+						complex *alpha, complex *beta, complex *A,
+						int *LDA);
+
 template<typename Matrix>
 void JDQZ<Matrix>::solve()
 {
@@ -206,15 +213,50 @@ void JDQZ<Matrix>::solve()
 				
 				gemm(n_, j-1, j, 1.0, V_, &vsr(0,1), ldvs, 0.0, Aux_);
 				
-				// -- swapping indices... --
+				// -- swap indices... --
 				itmp = V_;
 				V_   = Aux_;
 				Aux_ = itmp;
 				
-				gemm(n_, j-1, j, 1.0, Av_, &vsr(0,1), ldvs, 0.0, Aux_);			
-								
-				// TODO
-				return;
+				gemm(n_, j-1, j, 1.0, Av_, &vsr(0,1), ldvs, 0.0, Aux_);
+
+				// -- swap indices... --
+				itmp = Av_;
+				Av_  = Aux_;
+				Aux_ = itmp;
+
+				gemm(n_, j-1, j, 1.0, Bv_, &vsr(0,1), ldvs, 0.0, Aux_);
+
+				// -- swap indices... --
+				itmp = Bv_;
+				Bv_  = Aux_;
+				Aux_ = itmp;
+
+				gemm(n_, j-1, j, 1.0, W_, &vsr(0,1), ldvs, 0.0, Aux_);
+
+				// -- swap indices... --
+				itmp = W_;
+				W_   = Aux_;
+				Aux_ = itmp;
+
+				j = j-1;
+
+				zlacpy_("A", &j, &j, &zma(1,1), &ldvs, &ma[0],  &ldvs);
+				zlacpy_("A", &j, &j, &ma[0],    &ldvs, &zma[0], &ldvs);
+				zlacpy_("A", &j, &j, &zmb(1,1), &ldvs, &mb[0],  &ldvs);
+				zlacpy_("A", &j, &j, &mb[0],    &ldvs, &zmb[0], &ldvs);
+
+				complex zero(0,0);
+				complex one(1,0);
+				zlaset_("A", &j, &j, &zero, &one, &vsr[0], &ldvs);
+				zlaset_("A", &j, &j, &zero, &one, &vsl[0], &ldvs);
+
+				targeta = shifta;
+				targetb = shiftb;
+
+				ok = true;
+				mxmv = 0;
+				deps = 1.0;
 			}
 			else if (j == jmax_)
 			{
