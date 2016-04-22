@@ -20,6 +20,7 @@ public:
 	static std::vector<double> norms;
 	static std::vector<complex> alphas;
 	static std::vector<complex> betas;
+	static std::vector<complex> dotresults;
 	
 	friend std::ostream &operator<<(std::ostream &out, TestVector const &vec)
 		{
@@ -35,7 +36,7 @@ public:
 				sum += pow(el.real(), 2) + pow(el.imag(), 2);
 
 			norms.push_back(sqrt(sum)); // keeping track for testing purposes
-			std::cout << "norm: " << norms.size()-1 << ": " << sqrt(sum) << '\n';
+			std::cout << "norm  " << norms.size()-1 << " " << sqrt(sum) << '\n';
 			return sqrt(sum);
 		}
 
@@ -44,7 +45,12 @@ public:
 			assert(this->size() == other.size());
 			std::complex<double> result(0,0);
 			for (size_t i = 0; i != other.size(); ++i)
-				result += std::conj((*this)[i]) * other[i];			
+				result += std::conj((*this)[i]) * other[i];
+
+
+			dotresults.push_back(result);
+			std::cout << "dot   " << dotresults.size()-1 << " " << result << '\n';
+			
 			return result;
 		}
 
@@ -69,8 +75,8 @@ public:
 
 			alphas.push_back(-b); // for testing
 			betas.push_back(a);
-			std::cout << "alpha: " << alphas.size()-1 << ": " << -b << '\n';
-			std::cout << "beta:  "  << betas.size()-1 << ": " << a  << '\n';
+			std::cout << "alpha " << alphas.size()-1 << " " << -b << '\n';
+			std::cout << "beta  "  << betas.size()-1 << " " << a  << '\n';
 		}
 
 	// this = a * this
@@ -95,9 +101,10 @@ public:
 		}
 };
 
-std::vector<double> TestVector::norms = std::vector<double>();
+std::vector<double>  TestVector::norms = std::vector<double>();
 std::vector<complex> TestVector::alphas = std::vector<complex>();
 std::vector<complex> TestVector::betas = std::vector<complex>();
+std::vector<complex> TestVector::dotresults = std::vector<complex>();
  
 //------------------------------------------------------------------
 // Example matrix wrapper
@@ -202,6 +209,7 @@ TEST(JDQZ, Run)
 	TestVector::norms.clear();
 	TestVector::alphas.clear();
 	TestVector::betas.clear();
+	TestVector::dotresults.clear();
 	
 	size_t size = 100;
 	TestMatrix testmat(size);
@@ -217,9 +225,31 @@ TEST(JDQZ, Run)
 	EXPECT_NEAR(TestVector::norms[238], 0.158442752163, 1e-9);
 	EXPECT_NEAR(TestVector::norms[282], 1.1112136E-004, 1e-9);
 
-	// testing alphas and betas used in jdqzmv and accessible in axpby
-	EXPECT_NEAR(TestVector::alphas[10].real(), -4.963569309883, 1e-9);
-	EXPECT_NEAR(TestVector::betas[10].real(),  -0.201467923094, 1e-9);
+	// testing rnrm in gmres
+	EXPECT_NEAR(TestVector::norms[10],  1.625402443487, 1e-9);
+	EXPECT_NEAR(TestVector::norms[23],  1.1267987E-002, 1e-9);
+	EXPECT_NEAR(TestVector::norms[38],  3.3277400E-002, 1e-9);
+	
+	EXPECT_NEAR(TestVector::norms[297], 9.6501368E-011, 1e-13);
+	EXPECT_NEAR(TestVector::norms[330], 1.0632243E-010, 1e-13);
+	EXPECT_NEAR(TestVector::norms[329], 2.7895008E-009, 1e-13);
+	EXPECT_NEAR(TestVector::norms[344], 2.8189689E-015, 1e-16);
+	EXPECT_NEAR(TestVector::norms[385], 8.7597752E-004, 1e-9);
+	EXPECT_NEAR(TestVector::norms[386], 9.9515335E-005, 1e-9);
+	//EXPECT_NEAR(TestVector::norms[388], 1.0223998E-005, 1e-13);
+	//EXPECT_NEAR(TestVector::norms[428], 8.4349547E-006, 1e-13);
+	//EXPECT_NEAR(TestVector::norms[434], 6.9507040E-007, 1e-13);
+	//EXPECT_NEAR(TestVector::norms[490], 3.9779726E-008, 1e-13);
+	
+	// testing shifts used in jdqzmv, accessible through axpby
+	EXPECT_NEAR(TestVector::alphas[67].real() /
+				TestVector::betas[67].real(), 1.00000001236595, 1e-9);
+
+	EXPECT_NEAR(TestVector::alphas[83].real() /
+				TestVector::betas[83].real(), 0.99999999999999, 1e-9);
+
+	// EXPECT_NEAR(TestVector::alphas[10].real() /
+	// 			TestVector::betas[10].real(), 4.00000002614649, 1e-9);
 }
 
 //------------------------------------------------------------------

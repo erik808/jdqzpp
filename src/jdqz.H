@@ -116,7 +116,7 @@ void JDQZ<Matrix>::solve()
 				// TODO
 			}
 		}		
-		j++;
+		j++; if (j >= 16) return;
 
 		mgs(n_, j-1, V_, V_+j-1, 1);
 		mgs(n_, k,   Q_, V_+j-1, 1);
@@ -162,7 +162,7 @@ void JDQZ<Matrix>::solve()
 
 			// --- compute new q ---
 			// Q(:,k) = V_ * VSR(:,0)
-			gemv(n_, j, 1.0, V_, &vsr(0,0), 0.0, Q_+k);			
+			gemv(n_, j, 1.0, V_, &vsr(0,0), 0.0, Q_+k);
 
 			// --- orthogonalize new q ---
 			mgs(n_, k, Q_, Q_+k, 1);
@@ -373,7 +373,7 @@ extern "C" void zcopy_(int *N, complex *ZX, int *INCX, complex *ZY,	int *INCY);
 
 //------------------------------------------------------------------
 template<typename Matrix>
-void JDQZ<Matrix>::gmres(int n, int x, int r, int mxm, double eps, int mxmv,
+void JDQZ<Matrix>::gmres(int n, int x, int r, int mxm, double &eps, int &mxmv,
 						 complex alpha, complex beta, int k, int kz, int q,
 						 Complex2D &invqkz, int ldqkz, std::vector<int> &ipiv,
 						 Complex1D &f, int v, int tp)
@@ -468,7 +468,7 @@ void JDQZ<Matrix>::gmres(int n, int x, int r, int mxm, double eps, int mxmv,
 }
 
 //==================================================================
-extern "C" void zgetrs_(char* TRANS, int *N, int *NRHS, complex *A,
+extern "C" void zgetrs_(char const *TRANS, int *N, int *NRHS, complex *A,
 						int *LDA, int *IPIV, complex *B,
 						int *LDB, int *INFO);
 
@@ -482,10 +482,9 @@ void JDQZ<Matrix>::psolve(int n, int x, int nq, int q, int kz,
 
 	gemv(n, nq, 1.0, q, x, 0.0, f);
 
-	char trans = 'N';
 	int  nrhs = 1;
 	int  info = 0;
-	zgetrs_(&trans, &nq, &nrhs, &invqkz[0], &ldqkz,
+	zgetrs_("N", &nq, &nrhs, &invqkz[0], &ldqkz,
 			&ipiv[0], &f[0], &ldqkz, &info);
 
 	gemv(n, nq, -1.0, kz, &f[0], 1.0, x);
@@ -508,17 +507,6 @@ void JDQZ<Matrix>::mgs(int n, int k, int v, int w, int job)
 		nrm = 1.0 / s1;
 		work_[w].scale(nrm);
 	}
-}
-//==================================================================
-template<typename Matrix>
-void JDQZ<Matrix>::jdqzmv(int x, int y, int tmp,
-						  std::complex<double> alpha,
-						  std::complex<double> beta)
-{
-	// y = beta * A * x - alpha * B * x
-	mat_.AMUL(work_[x], work_[tmp]);
-	mat_.BMUL(work_[x], work_[y]);
-	work_[y].axpby(beta, work_[tmp], -alpha);
 }
 
 //==================================================================
@@ -545,6 +533,18 @@ void JDQZ<Matrix>::ortho(int n, int v, int w,
 		assert(s1 < s0 / kappa);
 	}
 	return;
+}
+
+//==================================================================
+template<typename Matrix>
+void JDQZ<Matrix>::jdqzmv(int x, int y, int tmp,
+						  std::complex<double> alpha,
+						  std::complex<double> beta)
+{
+	// y = beta * A * x - alpha * B * x
+	mat_.AMUL(work_[x], work_[tmp]);
+	mat_.BMUL(work_[x], work_[y]);
+	work_[y].axpby(beta, work_[tmp], -alpha);
 }
 
 //==================================================================

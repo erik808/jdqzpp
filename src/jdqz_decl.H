@@ -113,7 +113,7 @@ public:
 
 private:
 	
-	void gmres(int n, int x, int r, int mxm, double deps, int mxmv,
+	void gmres(int n, int x, int r, int mxm, double &eps, int &mxmv,
 			   complex alpha, complex beta, int k, int kz, int q,
 			   Complex2D &invqkz, int ldqkz, std::vector<int> &ipivqkz,
 			   Complex1D &f, int u, int tp);
