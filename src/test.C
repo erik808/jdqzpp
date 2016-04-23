@@ -236,7 +236,8 @@ TEST(JDQZ, Run)
 	EXPECT_NEAR(TestVector::norms[344], 2.8189689E-015, 1e-16);
 	EXPECT_NEAR(TestVector::norms[385], 8.7597752E-004, 1e-9);
 	EXPECT_NEAR(TestVector::norms[386], 9.9515335E-005, 1e-9);
-	//EXPECT_NEAR(TestVector::norms[388], 1.0223998E-005, 1e-13);
+	EXPECT_NEAR(TestVector::norms[388], 1.0223998E-005, 1e-9);
+	EXPECT_NEAR(TestVector::norms[402], 1.1491491E-004, 1e-9);
 	//EXPECT_NEAR(TestVector::norms[428], 8.4349547E-006, 1e-13);
 	//EXPECT_NEAR(TestVector::norms[434], 6.9507040E-007, 1e-13);
 	//EXPECT_NEAR(TestVector::norms[490], 3.9779726E-008, 1e-13);
