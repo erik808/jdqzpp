@@ -145,9 +145,9 @@ void JDQZ<Matrix>::solve()
 		
 		makemm(n_, j, W_, Av_, ma, zma, ldvs);
 		makemm(n_, j, W_, Bv_, mb, zmb, ldvs);
-
+		
 		gegs(j, zma, zmb, alpha, beta, vsl, vsr, zwork, rwork);
-
+		
 		bool attempt = true;
 		while (attempt)
 		{
@@ -231,8 +231,8 @@ void JDQZ<Matrix>::solve()
 				itmp = Bv_;
 				Bv_  = Aux_;
 				Aux_ = itmp;
-
-				gemm(n_, j-1, j, 1.0, W_, &vsr(0,1), ldvs, 0.0, Aux_);
+				
+				gemm(n_, j-1, j, 1.0, W_, &vsl(0,1), ldvs, 0.0, Aux_);
 
 				// -- swap indices... --
 				itmp = W_;
