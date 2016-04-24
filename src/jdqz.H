@@ -116,7 +116,7 @@ void JDQZ<Matrix>::solve()
 				// TODO
 			}
 		}		
-		j++; if (j >= 16) return;
+		j++; 
 
 		mgs(n_, j-1, V_, V_+j-1, 1);
 		mgs(n_, k,   Q_, V_+j-1, 1);

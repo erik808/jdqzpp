@@ -217,30 +217,35 @@ TEST(JDQZ, Run)
 	jdqz.solve();
 	
 	// testing rnrm in the inner "attempt" loop
-	EXPECT_NEAR(TestVector::norms[7],   7.370188617854, 1e-9);
-	EXPECT_NEAR(TestVector::norms[20],  0.808903713729, 1e-9);
-	EXPECT_NEAR(TestVector::norms[35],  0.671927897667, 1e-9);
-	EXPECT_NEAR(TestVector::norms[52],  0.467505198259, 1e-9);
-	EXPECT_NEAR(TestVector::norms[196], 0.777032215617, 1e-9);
-	EXPECT_NEAR(TestVector::norms[238], 0.158442752163, 1e-9);
-	EXPECT_NEAR(TestVector::norms[282], 1.1112136E-004, 1e-9);
+	EXPECT_NEAR(TestVector::norms[7],   7.370188617854, 1e-9 );
+	EXPECT_NEAR(TestVector::norms[20],  0.808903713729, 1e-9 );
+	EXPECT_NEAR(TestVector::norms[35],  0.671927897667, 1e-9 );
+	EXPECT_NEAR(TestVector::norms[52],  0.467505198259, 1e-9 );
+	EXPECT_NEAR(TestVector::norms[196], 0.777032215617, 1e-9 );
+	EXPECT_NEAR(TestVector::norms[238], 0.158442752163, 1e-9 );
+	EXPECT_NEAR(TestVector::norms[282], 1.1112136E-004, 1e-9 );
 
 	// testing rnrm in gmres
-	EXPECT_NEAR(TestVector::norms[10],  1.625402443487, 1e-9);
-	EXPECT_NEAR(TestVector::norms[23],  1.1267987E-002, 1e-9);
-	EXPECT_NEAR(TestVector::norms[38],  3.3277400E-002, 1e-9);
+	EXPECT_NEAR(TestVector::norms[10],  1.625402443487, 1e-9 );
+	EXPECT_NEAR(TestVector::norms[23],  1.1267987E-002, 1e-9 );
+	EXPECT_NEAR(TestVector::norms[38],  3.3277400E-002, 1e-9 );
 	
 	EXPECT_NEAR(TestVector::norms[297], 9.6501368E-011, 1e-13);
 	EXPECT_NEAR(TestVector::norms[330], 1.0632243E-010, 1e-13);
 	EXPECT_NEAR(TestVector::norms[329], 2.7895008E-009, 1e-13);
 	EXPECT_NEAR(TestVector::norms[344], 2.8189689E-015, 1e-16);
-	EXPECT_NEAR(TestVector::norms[385], 8.7597752E-004, 1e-9);
-	EXPECT_NEAR(TestVector::norms[386], 9.9515335E-005, 1e-9);
-	EXPECT_NEAR(TestVector::norms[388], 1.0223998E-005, 1e-9);
-	EXPECT_NEAR(TestVector::norms[402], 1.1491491E-004, 1e-9);
-	//EXPECT_NEAR(TestVector::norms[428], 8.4349547E-006, 1e-13);
-	//EXPECT_NEAR(TestVector::norms[434], 6.9507040E-007, 1e-13);
-	//EXPECT_NEAR(TestVector::norms[490], 3.9779726E-008, 1e-13);
+	EXPECT_NEAR(TestVector::norms[385], 8.7597752E-004, 1e-9 );
+	EXPECT_NEAR(TestVector::norms[386], 9.9515335E-005, 1e-9 );
+	EXPECT_NEAR(TestVector::norms[388], 1.0223998E-005, 1e-9 );
+	EXPECT_NEAR(TestVector::norms[402], 1.1491491E-004, 1e-9 );
+
+	EXPECT_NEAR(TestVector::norms[418], 14.00795121132, 1e-8 );
+	EXPECT_NEAR(TestVector::norms[445], 1.0260044E-005, 1e-8 );
+	EXPECT_NEAR(TestVector::norms[462], 14.66584688628, 1e-6 );
+	EXPECT_NEAR(TestVector::norms[474], 3.9779726E-008, 1e-14);
+	EXPECT_NEAR(TestVector::norms[521], 1.3973863E-010, 1e-15);
+	EXPECT_NEAR(TestVector::norms[632], 1.4030857E-010, 1e-15);
+	EXPECT_NEAR(TestVector::norms[773], 6.1466513E-013, 1e-15);
 	
 	// testing shifts used in jdqzmv, accessible through axpby
 	EXPECT_NEAR(TestVector::alphas[67].real() /
@@ -249,8 +254,17 @@ TEST(JDQZ, Run)
 	EXPECT_NEAR(TestVector::alphas[83].real() /
 				TestVector::betas[83].real(), 0.99999999999999, 1e-9);
 
-	// EXPECT_NEAR(TestVector::alphas[10].real() /
-	// 			TestVector::betas[10].real(), 4.00000002614649, 1e-9);
+	EXPECT_NEAR(TestVector::alphas[117].real() /
+				TestVector::betas[117].real(), 4, 1e-9);
+
+	EXPECT_NEAR(TestVector::alphas[126].real() /
+				TestVector::betas[126].real(), 9, 1e-9);
+
+	EXPECT_NEAR(TestVector::alphas[131].real() /
+				TestVector::betas[131].real(), 16, 1e-9);
+
+	EXPECT_NEAR(TestVector::alphas[132].real() /
+				TestVector::betas[132].real(), 25, 1e-9);
 }
 
 //------------------------------------------------------------------
