@@ -48,6 +48,9 @@ void JDQZ<Matrix>::solve()
 	double deps   = 1.0;
 	double rnrm   = 0.0;
 
+	complex zero(0,0);
+	complex one(1,0);
+
 	complex evcond( sqrt(pow(abs(shift_),2) + 1.0));
 	complex shifta  = shift_ / evcond;
 	complex shiftb  = 1.0    / evcond;
@@ -246,8 +249,6 @@ void JDQZ<Matrix>::solve()
 				zlacpy_("A", &j, &j, &zmb(1,1), &ldvs, &mb[0],  &ldvs);
 				zlacpy_("A", &j, &j, &mb[0],    &ldvs, &zmb[0], &ldvs);
 
-				complex zero(0,0);
-				complex one(1,0);
 				zlaset_("A", &j, &j, &zero, &one, &vsr[0], &ldvs);
 				zlaset_("A", &j, &j, &zero, &one, &vsl[0], &ldvs);
 
@@ -260,11 +261,39 @@ void JDQZ<Matrix>::solve()
 			}
 			else if (j == jmax_)
 			{
-				// TODO
-				return;
+				gemm(n_, jmin_, j, 1.0, V_, &vsr[0], ldvs, 0.0, Aux_);
+				itmp  = V_;
+				V_    = Aux_;
+				Aux_  = itmp;
+				
+				gemm(n_, jmin_, j, 1.0, Av_, &vsr[0], ldvs, 0.0, Aux_);
+				itmp  = Av_;
+				Av_   = Aux_;
+				Aux_  = itmp;
+				
+				gemm(n_, jmin_, j, 1.0, Bv_, &vsr[0], ldvs, 0.0, Aux_);
+				itmp  = Bv_;
+				Bv_   = Aux_;
+				Aux_  = itmp;
+				
+				gemm(n_, jmin_, j, 1.0, W_, &vsl[0], ldvs, 0.0, Aux_);
+
+				itmp = W_;
+				W_   = Aux_;
+				Aux_ = itmp;
+				j    = jmin_;
+					
+				zlacpy_("A", &j, &j, &zma[0], &ldvs, &ma[0],  &ldvs);
+				zlacpy_("A", &j, &j, &zmb[0], &ldvs, &mb[0],  &ldvs);
+				
+				zlaset_("A", &j, &j, &zero, &one, &vsr[0], &ldvs);
+				zlaset_("A", &j, &j, &zero, &one, &vsl[0], &ldvs);
 			}
 		}
 	}
+
+	// --- Did enough eigenpairs converge? ---
+a	// TODO
 }
 //==================================================================
 extern "C" void zgetrf_(int* M, int *N, complex *A,
