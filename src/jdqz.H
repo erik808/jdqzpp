@@ -666,31 +666,25 @@ void JDQZ<Matrix>::printParameters()
 template<typename Matrix>
 void JDQZ<Matrix>::setIndices()
 {
-	// d   = rhs, these pointers refer to the columns of the workspace
-	D_   = 0;
-	// Workspace for jdqzmv
-	Tp_  = D_ + 1;
-	// u   = pointer to Krylov space GMRES(m) or Bi-CSTAB(l)
-	U_   = Tp_ + 1; 
-	// v   = pointer to search space JDQZ with max dimension jmax
+	// These pointers refer to the columns of the workspace
+
+	D_   = 0; 	    // Storage for rhs, 
+	Tp_  = D_ + 1;  // Workspace for jdqzmv
+	U_   = Tp_ + 1; // Krylov space for GMRES(m) or Bi-CSTAB(l)
+
+	// Search space JDQZ with max dimension jmax
 	if (method_ == GMRES)
 		V_ = U_ + m_ + 1;
 	else if (method_ == CGSTAB)
 		V_ = U_ + 2*l_ + 6;
-	// w   = pointer to test subspace JDQZ with max dimension jmax
-	W_   = V_ + jmax_;
-	// av  = pointer to subspace AV with max dimension jmax
-	Av_  = W_ + jmax_;
-	// bv  = pointer to subspace BV with max dimension jmax
-	Bv_  = Av_ + jmax_;
-	// aux =
-	Aux_ = Bv_ + jmax_;
-	// q   = pointer to search Schur basis in JDQZ with max dimension kmax
-	Q_   = Aux_ + jmax_;
-	// z   = pointer to test Schur basis in JDQZ with max dimension kmax
-	Z_   = Q_ + kmax_;
-	// kz  = pointer to matrix K^{-1}Z_k
-	Kz_  = Z_ + kmax_;
+	
+	W_   = V_   + jmax_;  // Test space JDQZ with max dimension jmax
+	Av_  = W_   + jmax_;  // Subspace AV with max dimension jmax
+    Bv_  = Av_  + jmax_;  // Subspace BV with max dimension jmax
+	Aux_ = Bv_  + jmax_;  // Auxiliary space for GEMM mults
+	Q_   = Aux_ + jmax_;  // Search Schur basis in JDQZ, max dim kmax
+	Z_   = Q_   + kmax_;  // Test Schur basis in JDQZ, max dim kmax
+	Kz_  = Z_   + kmax_;  // Matrix K^{-1}Z_k
 }
 
 #endif
