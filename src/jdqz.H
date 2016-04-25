@@ -89,7 +89,6 @@ JDQZ(Matrix &matrix)
 }
 
 //==================================================================
-
 template<typename Matrix>
 void JDQZ<Matrix>::solve()
 {
@@ -121,9 +120,10 @@ void JDQZ<Matrix>::solve()
 	complex zalpha  = shifta;
 	complex zbeta   = shiftb;
 
-	Complex1D f(ldqkz);
 	Complex1D alpha(ldvs);
-	Complex1D beta(ldvs);	
+	Complex1D beta(ldvs);
+	
+	Complex1D f(ldqkz);
 	Complex1D zwork(ldzwork);
 	Complex1D aconv(ldvs);
 	Complex1D bconv(ldvs);
@@ -356,7 +356,6 @@ void JDQZ<Matrix>::solve()
 	}
 	
 	// --- Did enough eigenpairs converge? ---
-	std::cout << kmax_ << " " << k ;
 	assert(kmax_ == k);
 	assert(step < maxstep_);
 		
@@ -401,6 +400,8 @@ void JDQZ<Matrix>::solve()
 			zcopy_(&k, &bconv[0], &one, &beta[0], &one);
 		}
 	}
+	alpha_ = alpha;
+	beta_  = beta;
 }
 	
 //==================================================================
@@ -442,7 +443,7 @@ void JDQZ<Matrix>::gemv(int m, int n, complex alpha, int A,
 {
 	Y.scale(beta);
 	for (int i = 0; i != n; ++i)
-		Y[i] += alpha * work_[A].dot(work_[X]);
+		Y[i] += alpha * work_[A+i].dot(work_[X]);
 }
 
 //==================================================================
@@ -454,7 +455,7 @@ void JDQZ<Matrix>::gemv(int m, int n, complex alpha, int A,
 	for (int i = 0; i != n; ++i)
 	{
 		Y[i] *= beta;
-		Y[i] += alpha * work_[A].dot(work_[X]);
+		Y[i] += alpha * work_[A+i].dot(work_[X]);
 	}
 }
 

@@ -85,7 +85,8 @@ class JDQZ
 	bool wanted_;
 	
 	// Eigenvalue pairs
-	std::vector<std::complex<double> > alpha_, beta_;
+	std::vector<complex> alpha_;
+	std::vector<complex> beta_;
 
 	// Size of workspace
 	int lwork_;
@@ -109,7 +110,10 @@ public:
 	JDQZ(Matrix &matrix);
 	
 	void solve();
-	int  size() { return n_; }
+
+	std::vector<Vector> getEigenVectors() {return eivec_;}
+	std::vector<std::complex<double> > getAlpha() {return alpha_;}
+	std::vector<std::complex<double> > getBeta() {return beta_;}	
 
 private:
 	
