@@ -5,6 +5,68 @@
 #include <math.h>
 
 //==================================================================
+// LAPACK dependencies
+extern "C"
+{
+	void zcopy_(int *N, complex *ZX, int *INCX, complex *ZY,	int *INCY);
+
+	void zlacpy_(char const *UPLO, int *M, int *N, complex *A,
+				 int *LDA, complex *B, int *LDB);
+
+	void zlaset_(char const *UPLO, int *M, int *N,
+				 complex *alpha, complex *beta, complex *A,
+				 int *LDA);
+
+	void zggev_(char const *JOBVL, char const *JOBVR, int *N,
+				complex *A, int *LDA,
+				complex *B, int *LDB,
+				complex *ALPHA, complex *BETA,
+				complex *VL, int *LDVL,
+				complex *VR, int *LDVR,
+				complex *WORK, int *LWORK,
+				double *RWORK, int *INFO);
+
+	void zgetrf_(int* M, int *N, complex *A,
+				 int *LDA, int *IPIV, int *INFO);
+
+	void zrot_(int *N, complex *CX, int *INCX,
+			   complex *CY, int *INCY, double *C, complex *S);
+
+	void zlartg_(complex *F, complex *G, double *CS,
+				 complex *SN, complex *R);
+
+	void ztrsv_(char const *UPLO, char const *TRANS, char const *DIAG,
+				int *N, complex *A, int *LDA, complex *X, int *INCX);
+
+	void zgetrs_(char const *TRANS, int *N, int *NRHS, complex *A,
+				 int *LDA, int *IPIV, complex *B,
+				 int *LDB, int *INFO);
+
+//   compute the left and/or right Schur vectors (VSL and VSR)
+	void zgegs_(char *JOBVSL, char *JOBVSR, int *N,
+				complex *A, int *LDA,
+				complex *B, int *LDB,
+				complex *ALPHA, complex *BETA,
+				complex *VSL, int *LDVSL,
+				complex *VSR, int *LDVSR,
+				complex *WORK, int *LWORK,
+				double *RWORK, int *INFO);
+}
+
+//==================================================================
+// JDQZ_TOOLS dependencies
+extern "C"
+{
+	int select_(int *n, complex *sa, complex *sb,
+				complex *a, complex *b, int *order);
+
+	void myexc_(int *n, complex *s, complex *t, complex *z,
+				complex *q, int *ldz, int *ifst, int *ilst);
+
+}
+
+
+//==================================================================
 // constructor
 template<typename Matrix>
 JDQZ<Matrix>::
@@ -18,18 +80,15 @@ JDQZ(Matrix &matrix)
 
 	// setup workspace
 	work_ = std::vector<Vector>(lwork_, Vector(n_, 0.0));
+
+	// setup solution
+	eivec_ = std::vector<Vector>(kmax_, Vector(n_, 0.0));
 	
 	// set the indices for specific components in the workspace
 	setIndices();
 }
 
 //==================================================================
-extern "C" void zlacpy_(char const *UPLO, int *M, int *N, complex *A,
-						int *LDA, complex *B, int *LDB);
-
-extern "C" void zlaset_(char const *UPLO, int *M, int *N,
-						complex *alpha, complex *beta, complex *A,
-						int *LDA);
 
 template<typename Matrix>
 void JDQZ<Matrix>::solve()
@@ -42,14 +101,16 @@ void JDQZ<Matrix>::solve()
 	int j         = 0;
 	int mxmv      = 0;
 	int ldvs      = 50;
+	int ldzwork   = 4*ldvs;
 	int ldqkz     = ldvs;
 	int itmp      = 0;
+	int one       = 1;
 
 	double deps   = 1.0;
 	double rnrm   = 0.0;
 
-	complex zero(0,0);
-	complex one(1,0);
+	complex zzero(0,0);
+	complex zone(1,0);
 
 	complex evcond( sqrt(pow(abs(shift_),2) + 1.0));
 	complex shifta  = shift_ / evcond;
@@ -63,7 +124,7 @@ void JDQZ<Matrix>::solve()
 	Complex1D f(ldqkz);
 	Complex1D alpha(ldvs);
 	Complex1D beta(ldvs);	
-	Complex1D zwork(4*ldvs);
+	Complex1D zwork(ldzwork);
 	Complex1D aconv(ldvs);
 	Complex1D bconv(ldvs);
 	
@@ -73,6 +134,8 @@ void JDQZ<Matrix>::solve()
 	Complex2D zmb(ldvs, ldvs);
 	Complex2D vsl(ldvs, ldvs);
 	Complex2D vsr(ldvs, ldvs);
+	Complex2D ra(ldvs, ldvs);
+	Complex2D rb(ldvs, ldvs);
 
 	Complex2D mqkz(ldqkz, ldqkz);
 	Complex2D invqkz(ldqkz, ldqkz);
@@ -249,8 +312,8 @@ void JDQZ<Matrix>::solve()
 				zlacpy_("A", &j, &j, &zmb(1,1), &ldvs, &mb[0],  &ldvs);
 				zlacpy_("A", &j, &j, &mb[0],    &ldvs, &zmb[0], &ldvs);
 
-				zlaset_("A", &j, &j, &zero, &one, &vsr[0], &ldvs);
-				zlaset_("A", &j, &j, &zero, &one, &vsl[0], &ldvs);
+				zlaset_("A", &j, &j, &zzero, &zone, &vsr[0], &ldvs);
+				zlaset_("A", &j, &j, &zzero, &zone, &vsl[0], &ldvs);
 
 				targeta = shifta;
 				targetb = shiftb;
@@ -286,20 +349,61 @@ void JDQZ<Matrix>::solve()
 				zlacpy_("A", &j, &j, &zma[0], &ldvs, &ma[0],  &ldvs);
 				zlacpy_("A", &j, &j, &zmb[0], &ldvs, &mb[0],  &ldvs);
 				
-				zlaset_("A", &j, &j, &zero, &one, &vsr[0], &ldvs);
-				zlaset_("A", &j, &j, &zero, &one, &vsl[0], &ldvs);
+				zlaset_("A", &j, &j, &zzero, &zone, &vsr[0], &ldvs);
+				zlaset_("A", &j, &j, &zzero, &zone, &vsl[0], &ldvs);
 			}
 		}
 	}
-
+	
 	// --- Did enough eigenpairs converge? ---
-a	// TODO
-}
-//==================================================================
-extern "C" void zgetrf_(int* M, int *N, complex *A,
-						int *LDA, int *IPIV, int *INFO);
+	std::cout << kmax_ << " " << k ;
+	assert(kmax_ == k);
+	assert(step < maxstep_);
+		
+	if (wanted_)
+	{
+		// --- Compute the Schur matrices if the eigenvectors are ---
+		// ---  wanted, work_[Tp_] is used for temporary storage  ---
+		// ---  Compute RA:                                       ---
+		zlaset_("L", &k, &k, &zzero, &zzero, &ra[0], &ldvs);
+		for (int i = 1; i <= k; ++i) // 1-based !!
+		{
+			mat_.AMUL(work_[Q_+i-1], work_[Tp_]);
+			gemv(n_, i, 1.0, Z_, Tp_, 0.0, &ra(0,i-1));
+		}
+		// --- Compute RB: ---
+		zlaset_("L", &k, &k, &zzero, &zzero, &rb[0], &ldvs);
+		for (int i = 1; i <= k; ++i) // 1-based !!
+		{
+			mat_.BMUL(work_[Q_+i-1], work_[Tp_]);
+			gemv(n_, i, 1.0, Z_, Tp_, 0.0, &rb(0,i-1));
+		}
+			
+		// --- The eigenvectors RA and RB  belonging to the found eigenvalues
+		// --- are computed. The Schur vectors in VR and VS are replaced by the
+		// --- eigenvectors of RA and RB
+		int INFO = 0;
+		zggev_("N", "V", &k, &ra[0], &ldvs, &rb[0], &ldvs,
+			   &alpha[0], &beta[0], &vsl[0], &ldvs, &vsr[0], &ldvs,
+			   &zwork[0], &ldzwork, &rwork[0], &INFO);
 
-//------------------------------------------------------------------
+		// --- Compute the eigenvectors belonging to the found eigenvalues
+		// --- of A and put them in EIVEC
+		gemm(n_, k, k, 1.0, Q_, &vsr[0], ldvs, 0.0, eivec_);
+	}
+	else
+	{
+		// --- Store the Schurvectors in eivec
+		for (int i = 0; i != k; ++i)
+		{
+			eivec_[i] = work_[Q_+i];
+			zcopy_(&k, &aconv[0], &one, &alpha[0], &one);
+			zcopy_(&k, &bconv[0], &one, &beta[0], &one);
+		}
+	}
+}
+	
+//==================================================================
 template<typename Matrix>
 void JDQZ<Matrix>::makeqkz(int n, int k, int Q, int Kq, Complex2D &qkz,
 						   Complex2D &invqkz, int ldqkz,
@@ -338,7 +442,20 @@ void JDQZ<Matrix>::gemv(int m, int n, complex alpha, int A,
 {
 	Y.scale(beta);
 	for (int i = 0; i != n; ++i)
-		Y[i] = work_[A].dot(work_[X]);
+		Y[i] += alpha * work_[A].dot(work_[X]);
+}
+
+//==================================================================
+// Y = alpha*A**H*X + beta*Y
+template<typename Matrix>
+void JDQZ<Matrix>::gemv(int m, int n, complex alpha, int A,
+						int X, complex beta, complex *Y)
+{
+	for (int i = 0; i != n; ++i)
+	{
+		Y[i] *= beta;
+		Y[i] += alpha * work_[A].dot(work_[X]);
+	}
 }
 
 //==================================================================
@@ -356,14 +473,22 @@ void JDQZ<Matrix>::gemm(int m, int n, int k, complex alpha, int A,
 }
 
 //==================================================================
+// C = alpha*A*B + beta*C
+template<typename Matrix>
+void JDQZ<Matrix>::gemm(int m, int n, int k, complex alpha, int A,
+						complex *B, int ldb, complex beta,
+						std::vector<Vector> &C)
+{
+	assert(C.size() >= n);
+	for (int j = 0; j != n; ++j)
+	{
+		C[j].scale(beta);
+		for (int i = 0; i != k; ++i)
+			C[j].axpy(alpha * B[i+ldb*j], work_[A+i]);
+	}
+}
 
-extern "C" int select_(int *n, complex *sa, complex *sb,
-					   complex *a, complex *b, int *order);
-
-extern "C" void myexc_(int *n, complex *s, complex *t, complex *z,
-					   complex *q, int *ldz, int *ifst, int *ilst);
-
-//------------------------------------------------------------------
+//==================================================================
 template<typename Matrix>
 void JDQZ<Matrix>::qzsort(complex ta, complex tb, int k,
 						  Complex2D &s, Complex2D &t, Complex2D &z,
@@ -388,19 +513,6 @@ void JDQZ<Matrix>::qzsort(complex ta, complex tb, int k,
 }
 
 //==================================================================
-// Lapack stuff:
-extern "C" void zrot_(int *N, complex *CX, int *INCX,
-					  complex *CY, int *INCY, double *C, complex *S);
-
-extern "C" void zlartg_(complex *F, complex *G, double *CS,
-						complex *SN, complex *R);
-
-extern "C" void ztrsv_(char const *UPLO, char const *TRANS, char const *DIAG,
-					   int *N, complex *A, int *LDA, complex *X, int *INCX);
-
-extern "C" void zcopy_(int *N, complex *ZX, int *INCX, complex *ZY,	int *INCY);
-
-//------------------------------------------------------------------
 template<typename Matrix>
 void JDQZ<Matrix>::gmres(int n, int x, int r, int mxm, double &eps, int &mxmv,
 						 complex alpha, complex beta, int k, int kz, int q,
@@ -497,11 +609,6 @@ void JDQZ<Matrix>::gmres(int n, int x, int r, int mxm, double &eps, int &mxmv,
 }
 
 //==================================================================
-extern "C" void zgetrs_(char const *TRANS, int *N, int *NRHS, complex *A,
-						int *LDA, int *IPIV, complex *B,
-						int *LDB, int *INFO);
-
-//------------------------------------------------------------------
 template<typename Matrix>
 void JDQZ<Matrix>::psolve(int n, int x, int nq, int q, int kz,
 						  Complex2D &invqkz, int ldqkz,
@@ -541,8 +648,8 @@ void JDQZ<Matrix>::mgs(int n, int k, int v, int w, int job)
 //==================================================================
 template<typename Matrix>
 void JDQZ<Matrix>::ortho(int n, int v, int w,
-						  double &s0, double &s1,
-						  std::complex<double> &nrm)
+						 double &s0, double &s1,
+						 std::complex<double> &nrm)
 {
 	nrm = work_[v].dot(work_[w]);
 	work_[w].axpy(-nrm, work_[v]);
@@ -594,19 +701,6 @@ void JDQZ<Matrix>::makemm(int n, int k, int w, int v,
 }
 
 //==================================================================
-// LAPACK zgegs:
-//   compute the left and/or right Schur vectors (VSL and VSR)
-extern "C" void zgegs_(char *JOBVSL, char *JOBVSR, int *N,
-					   complex *A, int *LDA,
-					   complex *B, int *LDB,
-					   complex *ALPHA, complex *BETA,
-					   complex *VSL, int *LDVSL,
-					   complex *VSR, int *LDVSR,
-					   complex *WORK, int *LWORK,
-					   double *RWORK, int *INFO);
-
-//------------------------------------------------------------------
-// Our wrapper for zgegs_:
 template<typename Matrix>
 void JDQZ<Matrix>::gegs(int N, Complex2D &A, Complex2D &B, 
 						Complex1D &alpha, Complex1D &beta,

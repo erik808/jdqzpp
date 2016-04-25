@@ -157,13 +157,28 @@ private:
 	// Here we assume A and X are in the workspace.
 	// Y = alpha*A**H*X + beta*Y
 	void gemv(int m, int n, complex alpha, int A,
-			  int X, complex beta, Complex1D &Y); // TODO
+			  int X, complex beta, Complex1D &Y);
+	
+	// Matrix-Vector multiplication, type TRANS = C
+	// Here we assume A and X are in the workspace.
+	// Instead of a Complex1D we accept a complex *.
+	// Y = alpha*A**H*X + beta*Y 
+	void gemv(int m, int n, complex alpha, int A,
+			  int X, complex beta, complex *Y); 
 	
 	// Matrix-Matrix multiplication
 	// Here we assume A and C are in the workspace.
 	// C = alpha*A*B + beta*C
 	void gemm(int m, int n, int k, complex alpha, int A,
 			  complex *B, int ldb, complex beta, int C);
+
+	// Matrix-Matrix multiplication
+	// Here we assume A and C are in the workspace.
+	// Instead of an index we expect an entire
+	// std::vector<Vector>
+	// C = alpha*A*B + beta*C
+	void gemm(int m, int n, int k, complex alpha, int A,
+			  complex *B, int ldb, complex beta, std::vector<Vector> &C);
 	
 	void makeqkz(int n, int k, int Q, int Kq, Complex2D &qkz,
 				 Complex2D &invqkz, int ldqkz,
