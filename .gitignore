@@ -26,6 +26,7 @@
 !*.sh
 !*.note
 !*.txt
+!*.org
 
 !COPYING
 

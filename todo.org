@@ -1,0 +1,4 @@
+* TODO Put tests in separate folder.
+* TODO Add second test problem from example code.
+* TODO Add one of my own problems to tests.
+* TODO Test the case where j == jmax, I don't think that part has been run yet.

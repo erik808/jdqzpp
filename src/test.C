@@ -7,6 +7,11 @@
 
 #include "test.H"
 
+std::vector<double>  TestVector::norms = std::vector<double>();
+std::vector<complex> TestVector::alphas = std::vector<complex>();
+std::vector<complex> TestVector::betas = std::vector<complex>();
+std::vector<complex> TestVector::dotresults = std::vector<complex>();
+ 
 //------------------------------------------------------------------
 TEST(Vector, General)
 {
