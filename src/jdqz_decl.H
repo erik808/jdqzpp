@@ -111,6 +111,7 @@ public:
 	
 	void solve();
 
+	int kmax() {return kmax_;}
 	std::vector<Vector> getEigenVectors() {return eivec_;}
 	std::vector<std::complex<double> > getAlpha() {return alpha_;}
 	std::vector<std::complex<double> > getBeta() {return beta_;}	

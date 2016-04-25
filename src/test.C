@@ -134,17 +134,35 @@ TEST(JDQZ, Results)
 	size_t size = 100;
 	TestMatrix testmat(size);
 	JDQZ<TestMatrix> jdqz(testmat);
+
 	jdqz.solve();
 	
-	std::vector<TestVector> eivec = jdqz.getEigenVectors();
+	std::vector<TestVector>            eivec = jdqz.getEigenVectors();
 	std::vector<std::complex<double> > alpha = jdqz.getAlpha();
 	std::vector<std::complex<double> > beta  = jdqz.getBeta();
 
-	EXPECT_EQ(alpha[0] / beta[0], 1);
-	EXPECT_EQ(alpha[1] / beta[1], 4);
-	EXPECT_EQ(alpha[2] / beta[2], 9);
-	EXPECT_EQ(alpha[3] / beta[3], 16);
-	EXPECT_EQ(alpha[4] / beta[4], 25);
+	EXPECT_EQ(alpha[0].real() / beta[0].real(), 1);
+	EXPECT_EQ(alpha[1].real() / beta[1].real(), 4);
+	EXPECT_EQ(alpha[2].real() / beta[2].real(), 9);
+	EXPECT_EQ(alpha[3].real() / beta[3].real(), 16);
+	EXPECT_EQ(alpha[4].real() / beta[4].real(), 25);
+
+	std::vector<double> example_norms = { 0.607317e-13,
+										  0.129407e-08,
+										  0.205962e-08,
+										  0.686810e-09,
+										  0.614660e-12 };
+	
+	for (int j = 0; j != jdqz.kmax(); ++j)
+	{
+		TestVector residue(size, 0.0);
+		TestVector tmp(size, 0.0);
+		testmat.AMUL(eivec[j], residue);
+		residue.scale(beta[j]);
+		testmat.BMUL(eivec[j], tmp);
+		residue.axpy(-alpha[j], tmp);
+		EXPECT_NEAR(residue.norm(), example_norms[j], 1e-14);
+	}	
 }
 
 //------------------------------------------------------------------
