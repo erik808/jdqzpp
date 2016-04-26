@@ -9,6 +9,7 @@
 !src/
 !doc/
 !jdqz_tools/
+!tests/
 
 !*.m
 !*.xml
