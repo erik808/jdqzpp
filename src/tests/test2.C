@@ -22,13 +22,14 @@ TEST(JDQZ, Results)
 	std::map<std::string, double> list;
 	
 	list["Shift (real part)"]         = 0.5;
-	list["Max size search space"]     = 15;
+	list["Number of eigenvalues"]     = 5;
+	list["Max size search space"]     = 20;
 	list["Min size search space"]     = 10;
 	list["Max JD iterations"]         = 200;
 	list["Tracking parameter"]        = 1e-8;
 	list["Criterion for Ritz values"] = 0;
 	list["Linear solver"]             = 1;
-	list["GMRES search space"]        = 10;
+	list["GMRES search space"]        = 20;
 		
 	ParameterList params(list);
 	
@@ -40,10 +41,22 @@ TEST(JDQZ, Results)
 	std::vector<std::complex<double> > alpha = jdqz.getAlpha();
 	std::vector<std::complex<double> > beta  = jdqz.getBeta();
 
-   for (int j = 0; j != jdqz.kmax(); ++j)
-   {
-	   std::cout << alpha[j] << std::endl;
-   }
+	std::cout << jdqz.kmax() << " converged eigenvalues\n\n";
+	
+	for (int j = 0; j != jdqz.kmax(); ++j)
+	{
+		TestVector residue(size, 0.0);
+		TestVector tmp(size, 0.0);
+		testmat.AMUL(eivec[j], residue);
+		residue.scale(beta[j]);
+		testmat.BMUL(eivec[j], tmp);
+		residue.axpy(-alpha[j], tmp);
+		std::cout << "alpha: " <<  std::setw(20) << alpha[j]
+				  << " beta: " << std::setw(20) << beta[j]
+				  << " " << residue.norm() << std::endl;
+		
+		EXPECT_NEAR(residue.norm(), 0, 1e-8);
+	}	
 }
 
 //------------------------------------------------------------------

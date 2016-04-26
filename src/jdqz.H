@@ -306,7 +306,7 @@ void JDQZ<Matrix>::solve()
 				ok = false;
 			}
 
-			found   = ((rnrm < eps_ && j > 1) || k == kmax_ - 1);
+			found   = (rnrm < eps_ && (j > 1 || k == kmax_ - 1));
 			attempt = found;
 			
 			if (found)

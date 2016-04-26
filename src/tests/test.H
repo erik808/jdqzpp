@@ -173,7 +173,7 @@ public:
 };
 
 //------------------------------------------------------------------
-// ParameterList for testing purposes
+// Simple parameterList for testing purposes
 class ParameterList
 {
 	std::map<std::string, double>  list_;
