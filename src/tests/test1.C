@@ -11,7 +11,7 @@ std::vector<double>  TestVector::norms = std::vector<double>();
 std::vector<complex> TestVector::alphas = std::vector<complex>();
 std::vector<complex> TestVector::betas = std::vector<complex>();
 std::vector<complex> TestVector::dotresults = std::vector<complex>();
- 
+
 //------------------------------------------------------------------
 TEST(Vector, General)
 {
@@ -50,7 +50,6 @@ TEST(Matrix, Operators)
 	TestVector vec3(n, 0.0);
 		
 	TestMatrix testmat(n);
-
 	testmat.AMUL(vec1, vec2);
 	EXPECT_EQ(vec2[49].real(), 50);
 	EXPECT_EQ(vec2[77].real(), 78);
@@ -61,26 +60,22 @@ TEST(Matrix, Operators)
 }
 
 //------------------------------------------------------------------
-TEST(JDQZ, Setup)
-{
-	size_t size = 100;
-	TestMatrix testmat(size);
-	JDQZ<TestMatrix> jdqz(testmat);
-	// TODO
-}
-
-//------------------------------------------------------------------
 TEST(JDQZ, Run)
 {
 	TestVector::norms.clear();
 	TestVector::alphas.clear();
 	TestVector::betas.clear();
 	TestVector::dotresults.clear();
-	
+
 	size_t size = 100;
 	TestMatrix testmat(size);
 	JDQZ<TestMatrix> jdqz(testmat);
-	jdqz.solve();
+
+	
+	ParameterList params;
+	jdqz.setParameters(params);
+	
+	jdqz.solve();	
 	
 	// testing rnrm in the inner "attempt" loop
 	EXPECT_NEAR(TestVector::norms[7],   7.370188617854, 1e-9 );
@@ -139,6 +134,9 @@ TEST(JDQZ, Results)
 	size_t size = 100;
 	TestMatrix testmat(size);
 	JDQZ<TestMatrix> jdqz(testmat);
+	
+	ParameterList params;
+ 	jdqz.setParameters(params);
 
 	jdqz.solve();
 	

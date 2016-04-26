@@ -103,20 +103,27 @@ class JDQZ
 	// Matrix wrapper
 	Matrix mat_;
 
-	bool testing_;
+	bool initialized_;
 	
 public:
-	
+
+	// constructor
 	JDQZ(Matrix &matrix);
 	
 	void solve();
 
+	template<typename PList>
+	void setParameters(PList &params);
+	void printParameters();	
+	
 	int kmax() {return kmax_;}
 	std::vector<Vector> getEigenVectors() {return eivec_;}
 	std::vector<std::complex<double> > getAlpha() {return alpha_;}
 	std::vector<std::complex<double> > getBeta() {return beta_;}	
 
 private:
+
+	void setup();
 	
 	void gmres(int n, int x, int r, int mxm, double &eps, int &mxmv,
 			   complex alpha, complex beta, int k, int kz, int q,
@@ -188,9 +195,7 @@ private:
 	void makeqkz(int n, int k, int Q, int Kq, Complex2D &qkz,
 				 Complex2D &invqkz, int ldqkz,
 				 std::vector<int> &ipivqkz);
-	
-	void setParameters();
-	void printParameters();
+
 	void setIndices();
 };
 

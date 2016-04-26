@@ -62,9 +62,7 @@ extern "C"
 
 	void myexc_(int *n, complex *s, complex *t, complex *z,
 				complex *q, int *ldz, int *ifst, int *ilst);
-
 }
-
 
 //==================================================================
 // constructor
@@ -73,11 +71,49 @@ JDQZ<Matrix>::
 JDQZ(Matrix &matrix)
 	:
 	mat_(matrix),
-	testing_(false)
-{
-	// set parameters
-	setParameters();
+	initialized_(false)
+{}
 
+//==================================================================
+
+template<typename Matrix>
+template<typename PList>
+void JDQZ<Matrix>::setParameters(PList &params)
+{
+	n_ = params.get("Problem size", mat_.size());
+	assert(n_ == mat_.size());
+	
+	double shiftRe = params.get("Shift (real part)", 0.0);
+	double shiftIm = params.get("Shift (imaginary part)", 0.0);
+	shift_     = std::complex<double>(shiftRe, shiftIm);
+	
+	eps_       = params.get("Tolerance", 1e-9);
+	kmax_      = params.get("Number of eigenvalues", 5);
+	jmax_      = params.get("Max size search space", 20);
+	jmin_      = params.get("Min size search space", 10);
+	maxstep_   = params.get("Max JD iterations", 1000);
+	lock_      = params.get("Tracking parameter", 1e-9);
+	order_     = params.get("Criterion for Ritz values", 0);
+	method_    = params.get("Linear solver", 1);
+	m_         = params.get("GMRES search space", 30);
+	l_         = params.get("Bi-CGstab polynomial degree", 2);
+	maxnmv_    = params.get("Max mat-vec mults", 100);
+	testspace_ = params.get("Testspace expansion", 3); 
+	wanted_    = params.get("Compute converged eigenvectors", true);
+	
+	if (method_ == 1)
+		lwork_ =  4 +  m_  + 5*jmax_ + 3*kmax_;
+	else
+		lwork_ = 10 + 6*l_ + 5*jmax_ + 3*kmax_;
+
+	// now we can setup the solver
+	setup();
+}
+//==================================================================
+
+template<typename Matrix>
+void JDQZ<Matrix>::setup()
+{
 	// setup workspace
 	work_ = std::vector<Vector>(lwork_, Vector(n_, 0.0));
 
@@ -86,12 +122,22 @@ JDQZ(Matrix &matrix)
 	
 	// set the indices for specific components in the workspace
 	setIndices();
+
+	initialized_ = true;
 }
+
 
 //==================================================================
 template<typename Matrix>
 void JDQZ<Matrix>::solve()
 {
+	if (!initialized_)
+	{
+		std::cout << "JDQZ: Parameters are not set, "
+				  << "setup()not called, RETURNING\n";
+		return;
+	}
+	
 	//-------------------------------------------------------
 	// some initializations
 	int step      = 0;
@@ -356,8 +402,12 @@ void JDQZ<Matrix>::solve()
 	}
 	
 	// --- Did enough eigenpairs converge? ---
-	assert(kmax_ == k);
-	assert(step < maxstep_);
+	if (kmax_ != k)
+		std::cout << " --- less eigenvalues have converged than requested --- \n";
+
+	kmax_ = k;
+	if (step >= maxstep_)
+		std::cout << " --- maximum number of steps reached --- \n";
 		
 	if (wanted_)
 	{
@@ -666,10 +716,11 @@ void JDQZ<Matrix>::ortho(int n, int v, int w,
 		nrm += tmp;
 		work_[w].axpy(-tmp, work_[v]);
 		s1 = work_[w].norm();
-
-		assert(s1 < s0 / kappa);
+		
+		if (s1 < s0 / kappa)
+			std::cout << "WARNING: zero vector in mgs..." << std::endl;
 	}
-	return;
+	return; 
 }
 
 //==================================================================
@@ -732,36 +783,6 @@ void JDQZ<Matrix>::gegs(int N, Complex2D &A, Complex2D &B,
 	assert(INFO == 0);
 }
 
-//==================================================================
-template<typename Matrix>
-void JDQZ<Matrix>::setParameters()
-{
-	// obtain problem size from matrix
-	n_ = mat_.size();
-
-	//-------------------------------------------------------
-	// temporarily hardcoded parameters 
-	shift_     = std::complex<double>(0,0);
-	eps_       = 1e-9;
-	kmax_      = 5;
-	jmax_      = 20;
-	jmin_      = 10;
-	maxstep_   = 1000;
-	lock_      = 1e-9;
-	order_     = 0;
-	method_    = 1;
-	m_         = 30;
-	l_         = 2;
-	maxnmv_    = 100;
-	testspace_ = 3; 
-	wanted_    = true;
-	//-------------------------------------------------------
-
-	if (method_ == 1)
-		lwork_ =  4 +  m_  + 5*jmax_ + 3*kmax_;
-	else
-		lwork_ = 10 + 6*l_ + 5*jmax_ + 3*kmax_;
-}
 
 //==================================================================
 template<typename Matrix>

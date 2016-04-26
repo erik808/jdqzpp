@@ -1,6 +1,7 @@
 #ifndef TEST_H
 #define TEST_H
 
+//------------------------------------------------------------------
 class TestVector : public std::vector<std::complex<double> >
 {
 public:
@@ -30,6 +31,7 @@ public:
 				sum += pow(el.real(), 2) + pow(el.imag(), 2);
 
 			norms.push_back(sqrt(sum)); // keeping track for testing purposes
+			//std::cout << "norm:" << norms.size()-1 << " " << sqrt(sum) << std::endl;
 			return sqrt(sum);
 		}
 
@@ -66,7 +68,7 @@ public:
 
 			alphas.push_back(-b); // for testing
 			betas.push_back(a);
-		}
+		} 
 
 	// this = a * this
 	void scale(std::complex<double> a)
@@ -128,6 +130,77 @@ public:
 				q[i-1] = ((double) i) * q[i-1] / ((double) i*i - 31);
 		}
 	size_t size() { return n_; }
+};
+
+//------------------------------------------------------------------
+// Second matrix wrapper
+class TestMatrix2
+{
+public:
+	// Define a Vector type
+	using Vector = TestVector;
+
+private:	
+	// Problem size
+	size_t n_;
+	
+public:
+	TestMatrix2(int size) : n_(size) {};
+
+	// Subroutine to compute r = Aq
+	void AMUL(Vector const &q, Vector &r)
+		{
+			for (size_t i = 3; i <= n_-1; ++i)
+				r[i-1] = q[i-3] + 2.0 * q[i-1] + q[i];
+			r[0]    = 2.0 * q[0] + q[1];
+			r[1]    = 2.0 * q[1] + q[2];
+			r[n_-1] = q[n_-3] + 2.0 * q[n_-1];
+		}
+
+	// Subroutine to compute r = Bq
+	void BMUL(Vector const &q, Vector &r)
+		{
+			for (size_t i = 1; i <= n_; ++i)
+				r[i-1] = q[i-1];
+		}
+
+	void PRECON(Vector &q)
+		{
+			// Do nothing
+		}
+
+	size_t size() { return n_; }
+};
+
+//------------------------------------------------------------------
+// ParameterList for testing purposes
+class ParameterList
+{
+	std::map<std::string, double>  list_;
+
+public:
+
+	// constructor
+	ParameterList() {}
+	
+	ParameterList(std::map<std::string, double> const &other)
+		:
+		list_(other)
+		{}
+
+	template<typename T>
+	T get(std::string const &key, T value)
+		{
+			if (list_.find(key) != list_.end())				
+				return list_[key];
+			else
+				return value;
+		}
+
+	void set(std::string const &key, double value)
+		{
+			list_[key] = value;
+		}	
 };
 
 #endif
