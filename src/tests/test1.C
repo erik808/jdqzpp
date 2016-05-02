@@ -68,8 +68,9 @@ TEST(JDQZ, Run)
 	TestVector::dotresults.clear();
 
 	size_t size = 100;
+	TestVector vec(size,0.0);
 	TestMatrix testmat(size);
-	JDQZ<TestMatrix> jdqz(testmat);
+	JDQZ<TestMatrix> jdqz(testmat, vec);
 
 	
 	ParameterList params;
@@ -133,7 +134,8 @@ TEST(JDQZ, Results)
 {
 	size_t size = 100;
 	TestMatrix testmat(size);
-	JDQZ<TestMatrix> jdqz(testmat);
+	TestVector vec(size, 0.0);
+	JDQZ<TestMatrix> jdqz(testmat, vec);
 	
 	ParameterList params;
  	jdqz.setParameters(params);

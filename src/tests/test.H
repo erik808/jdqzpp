@@ -5,6 +5,7 @@
 class TestVector : public std::vector<std::complex<double> >
 {
 public:
+	TestVector() : std::vector<std::complex<double> >() {}
 
 	TestVector(size_t n) :
 		std::vector<std::complex<double> >(n, 0){}		   

@@ -103,12 +103,15 @@ class JDQZ
 	// Matrix wrapper
 	Matrix mat_;
 
+	// Initial vector
+	Vector initial_;
+	
 	bool initialized_;
 	
 public:
 
 	// constructor
-	JDQZ(Matrix &matrix);
+	JDQZ(Matrix &matrix, Vector &initial);
 	
 	void solve();
 

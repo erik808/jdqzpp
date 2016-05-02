@@ -17,7 +17,8 @@ TEST(JDQZ, Results)
 {
 	size_t size = 50;
 	TestMatrix2 testmat(size);
-	JDQZ<TestMatrix2> jdqz(testmat);
+	TestVector vec(size, 0.0);
+	JDQZ<TestMatrix2> jdqz(testmat, vec);
 
 	std::map<std::string, double> list;
 	

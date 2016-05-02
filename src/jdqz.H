@@ -42,7 +42,7 @@ extern "C"
 				 int *LDA, int *IPIV, complex *B,
 				 int *LDB, int *INFO);
 
-//   compute the left and/or right Schur vectors (VSL and VSR)
+//  compute the left and/or right Schur vectors (VSL and VSR)
 	void zgegs_(char *JOBVSL, char *JOBVSR, int *N,
 				complex *A, int *LDA,
 				complex *B, int *LDB,
@@ -68,9 +68,10 @@ extern "C"
 // constructor
 template<typename Matrix>
 JDQZ<Matrix>::
-JDQZ(Matrix &matrix)
+JDQZ(Matrix &matrix, Vector &initial)
 	:
 	mat_(matrix),
+	initial_(initial),
 	initialized_(false)
 {}
 
@@ -110,22 +111,25 @@ void JDQZ<Matrix>::setParameters(PList &params)
 	setup();
 }
 //==================================================================
-
 template<typename Matrix>
 void JDQZ<Matrix>::setup()
 {
 	// setup workspace
-	work_ = std::vector<Vector>(lwork_, Vector(n_, 0.0));
-
+	initial_.zero();
+	work_ = std::vector<Vector>(lwork_, Vector());
+	for (int i = 0; i != lwork_; ++i)
+		work_[i] = initial_;
+	
 	// setup solution
-	eivec_ = std::vector<Vector>(kmax_, Vector(n_, 0.0));
+	eivec_ = std::vector<Vector>(kmax_, Vector());
+	for (int i = 0; i != kmax_; ++i)
+		eivec_[i] = initial_;
 	
 	// set the indices for specific components in the workspace
 	setIndices();
-
+	
 	initialized_ = true;
 }
-
 
 //==================================================================
 template<typename Matrix>
