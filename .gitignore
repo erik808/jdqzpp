@@ -8,6 +8,7 @@
 !Makefile.*
 !src/
 !doc/
+!jdqz/
 !jdqz_tools/
 !tests/
 
