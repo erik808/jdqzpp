@@ -36,3 +36,7 @@ find_package(LAPACK)
 target_link_libraries(test_jdqz_1 PUBLIC ${LAPACK_LIBRARIES})
 target_link_libraries(test_jdqz_2 PUBLIC ${LAPACK_LIBRARIES})
 
+set(TEST_INCL_DIRS ../jdqz)
+
+target_include_directories(test_jdqz_1 PUBLIC ${TEST_INCL_DIRS})
+target_include_directories(test_jdqz_2 PUBLIC ${TEST_INCL_DIRS})

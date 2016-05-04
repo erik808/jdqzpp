@@ -1,6 +1,8 @@
 #ifndef TEST_H
 #define TEST_H
 
+#include <map>
+
 //------------------------------------------------------------------
 class TestVector : public std::vector<std::complex<double> >
 {
