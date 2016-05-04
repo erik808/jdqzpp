@@ -2,9 +2,9 @@
 #define JDQZMACROS_H
 
 // PARALLEL PRINT MACRO
-#ifndef PRINT
+#ifndef WRITE
 # ifdef HAVE_MPI
-#  define PRINT(msg)							\
+#  define WRITE(msg)							\
 	{											\
 		int rank;								\
 		MPI_Comm_rank(MPI_COMM_WORLD, &rank);	\
@@ -12,7 +12,7 @@
 			std::cout << msg << std::endl;		\
 	}
 # else
-#  define PRINT(msg) std::cout << msg << std::endl;
+#  define WRITE(msg) std::cout << msg << std::endl;
 # endif
 #endif
 

@@ -107,6 +107,9 @@ class JDQZ
 	Vector initial_;
 	
 	bool initialized_;
+
+	// output level
+	int verbosity_;
 	
 public:
 

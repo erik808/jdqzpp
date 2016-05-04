@@ -77,41 +77,6 @@ JDQZ(Matrix &matrix, Vector &initial)
 {}
 
 //==================================================================
-
-template<typename Matrix>
-template<typename PList>
-void JDQZ<Matrix>::setParameters(PList &params)
-{
-	n_ = params.get("Problem size", mat_.size());
-	assert(n_ == mat_.size());
-	
-	double shiftRe = params.get("Shift (real part)", 0.0);
-	double shiftIm = params.get("Shift (imaginary part)", 0.0);
-	shift_     = std::complex<double>(shiftRe, shiftIm);
-	
-	eps_       = params.get("Tolerance", 1e-9);
-	kmax_      = params.get("Number of eigenvalues", 5);
-	jmax_      = params.get("Max size search space", 20);
-	jmin_      = params.get("Min size search space", 10);
-	maxstep_   = params.get("Max JD iterations", 1000);
-	lock_      = params.get("Tracking parameter", 1e-9);
-	order_     = params.get("Criterion for Ritz values", 0);
-	method_    = params.get("Linear solver", 1);
-	m_         = params.get("GMRES search space", 30);
-	l_         = params.get("Bi-CGstab polynomial degree", 2);
-	maxnmv_    = params.get("Max mat-vec mults", 100);
-	testspace_ = params.get("Testspace expansion", 3); 
-	wanted_    = params.get("Compute converged eigenvectors", true);
-	
-	if (method_ == 1)
-		lwork_ =  4 +  m_  + 5*jmax_ + 3*kmax_;
-	else
-		lwork_ = 10 + 6*l_ + 5*jmax_ + 3*kmax_;
-
-	// now we can setup the solver
-	setup();
-}
-//==================================================================
 template<typename Matrix>
 void JDQZ<Matrix>::setup()
 {
@@ -138,7 +103,7 @@ void JDQZ<Matrix>::solve()
 {
 	if (!initialized_)
 	{
-		PRINT( "JDQZ: Parameters are not set, "
+		WRITE( "JDQZ: Parameters are not set, "
 			   << "setup()not called, RETURNING\n");
 		return;
 	}
@@ -234,9 +199,6 @@ void JDQZ<Matrix>::solve()
 		}
 		j++;
 
-		PRINT(" jdqz: step = " << step << " j = " << j);
-		PRINT("   residual = " << work_[D_].norm());
-
 		mgs(n_, j-1, V_, V_+j-1, 1);
 		mgs(n_, k,   Q_, V_+j-1, 1);
 		
@@ -315,7 +277,10 @@ void JDQZ<Matrix>::solve()
 
 			found   = (rnrm < eps_ && (j > 1 || k == kmax_ - 1));
 			attempt = found;
-			
+
+			WRITE(" jdqz: step = " << step << " j = " << j 
+				  <<"   residual = " << rnrm);
+
 			if (found)
 			{
 				// --- increase the number of found evs ---
@@ -410,11 +375,11 @@ void JDQZ<Matrix>::solve()
 	
 	// --- Did enough eigenpairs converge? ---
 	if (kmax_ != k)
-		PRINT(" --- less eigenvalues have converged than requested --- ");
+		WRITE(" --- less eigenvalues have converged than requested --- ");
 
 	kmax_ = k;
 	if (step >= maxstep_)
-		PRINT(" --- maximum number of steps reached --- ");
+		WRITE(" --- maximum number of steps reached --- ");
 		
 	if (wanted_)
 	{
@@ -725,7 +690,7 @@ void JDQZ<Matrix>::ortho(int n, int v, int w,
 		s1 = work_[w].norm();
 		
 		if (s1 < s0 / kappa)
-			PRINT("WARNING: zero vector in mgs...")
+			WRITE("WARNING: zero vector in mgs...")
 	}
 	return; 
 }
@@ -817,25 +782,61 @@ void JDQZ<Matrix>::setIndices()
 
 //==================================================================
 template<typename Matrix>
+template<typename PList>
+void JDQZ<Matrix>::setParameters(PList &params)
+{
+	n_ = params.get("Problem size", mat_.size());
+	assert(n_ == mat_.size());
+	
+	double shiftRe = params.get("Shift (real part)", 0.0);
+	double shiftIm = params.get("Shift (imaginary part)", 0.0);
+	shift_     = std::complex<double>(shiftRe, shiftIm);
+	
+	eps_       = params.get("Tolerance", 1e-9);
+	kmax_      = params.get("Number of eigenvalues", 5);
+	jmax_      = params.get("Max size search space", 20);
+	jmin_      = params.get("Min size search space", 10);
+	maxstep_   = params.get("Max JD iterations", 1000);
+	lock_      = params.get("Tracking parameter", 1e-9);
+	order_     = params.get("Criterion for Ritz values", 0);
+	method_    = params.get("Linear solver", 1);
+	m_         = params.get("GMRES search space", 30);
+	l_         = params.get("Bi-CGstab polynomial degree", 2);
+	maxnmv_    = params.get("Max mat-vec mults", 100);
+	testspace_ = params.get("Testspace expansion", 3); 
+	wanted_    = params.get("Compute converged eigenvectors", true);
+	verbosity_ = params.get("Verbosity", 1);
+	
+	if (method_ == 1)
+		lwork_ =  4 +  m_  + 5*jmax_ + 3*kmax_;
+	else
+		lwork_ = 10 + 6*l_ + 5*jmax_ + 3*kmax_;
+
+	// now we can setup the solver
+	setup();
+}
+
+//==================================================================
+template<typename Matrix>
 void JDQZ<Matrix>::printParameters()
 {
-	PRINT("\nJDQZ Parameters:   ");
-	PRINT(" | n_         " << n_ );
-	PRINT(" | shift_     " << shift_ );
-	PRINT(" | eps_       " << eps_ );
-	PRINT(" | kmax_      " << kmax_ );
-	PRINT(" | jmax_      " << jmax_ );
-	PRINT(" | jmin_      " << jmin_ );
-	PRINT(" | maxstep_   " << maxstep_ );
-	PRINT(" | lock_      " << lock_ );
-	PRINT(" | order_     " << order_ );
-	PRINT(" | method_    " << method_ );
-	PRINT(" | m_         " << m_ );
-	PRINT(" | l_         " << l_ );
-	PRINT(" | maxnmv_    " << maxnmv_ );
-	PRINT(" | testspace_ " << testspace_ );
-	PRINT(" | wanted_    " << wanted_ );
-	PRINT(" | lwork_     " << lwork_ << '\n' );	
+	WRITE("\nJDQZ Parameters:   ");
+	WRITE(" | n_         " << n_ );
+	WRITE(" | shift_     " << shift_ );
+	WRITE(" | eps_       " << eps_ );
+	WRITE(" | kmax_      " << kmax_ );
+	WRITE(" | jmax_      " << jmax_ );
+	WRITE(" | jmin_      " << jmin_ );
+	WRITE(" | maxstep_   " << maxstep_ );
+	WRITE(" | lock_      " << lock_ );
+	WRITE(" | order_     " << order_ );
+	WRITE(" | method_    " << method_ );
+	WRITE(" | m_         " << m_ );
+	WRITE(" | l_         " << l_ );
+	WRITE(" | maxnmv_    " << maxnmv_ );
+	WRITE(" | testspace_ " << testspace_ );
+	WRITE(" | wanted_    " << wanted_ );
+	WRITE(" | lwork_     " << lwork_ << '\n' );	
 }
   
 #endif

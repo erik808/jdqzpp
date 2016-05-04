@@ -40,3 +40,5 @@ set(TEST_INCL_DIRS ../jdqz)
 
 target_include_directories(test_jdqz_1 PUBLIC ${TEST_INCL_DIRS})
 target_include_directories(test_jdqz_2 PUBLIC ${TEST_INCL_DIRS})
+
+install(TARGETS test_jdqz_1 test_jdqz_2 DESTINATION test)
