@@ -24,7 +24,7 @@ if (NOT DEFINED ${CMAKE_Fortran_FLAGS})
 	set (CMAKE_Fortran_FLAGS "-g -u -O0")
   elseif (Fortran_COMPILER_NAME MATCHES "ifort.*") #ifort
 	set (CMAKE_Fortran_FLAGS "")
-  endif (Fortran_COMPILER_NAME MATCHES "gfortran.*")
+  endif ()
 endif ()
 
 message("-- JDQZPP Fortran flags: " ${CMAKE_Fortran_FLAGS})

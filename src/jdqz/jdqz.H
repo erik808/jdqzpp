@@ -2,6 +2,7 @@
 #define JDQZ_H
 
 #include "jdqz_decl.H"
+#include "jdqz_macros.H"
 #include <math.h>
 
 //==================================================================
@@ -137,8 +138,8 @@ void JDQZ<Matrix>::solve()
 {
 	if (!initialized_)
 	{
-		std::cout << "JDQZ: Parameters are not set, "
-				  << "setup()not called, RETURNING\n";
+		PRINT( "JDQZ: Parameters are not set, "
+			   << "setup()not called, RETURNING\n");
 		return;
 	}
 	
@@ -219,7 +220,6 @@ void JDQZ<Matrix>::solve()
 				mxmv = 1;
 				gmres(n_, V_+j, D_, m_, deps, mxmv, zalpha, zbeta, k+1,
 					  Kz_, Q_, invqkz, ldqkz, ipivqkz, f, U_, Tp_);
-				// -- > continue here
 			}
 			else if (method_ == GMRES)
 			{
@@ -231,8 +231,11 @@ void JDQZ<Matrix>::solve()
 			{
 				// TODO
 			}
-		}		
-		j++; 
+		}
+		j++;
+
+		PRINT(" jdqz: step = " << step << " j = " << j);
+		PRINT("   residual = " << work_[D_].norm());
 
 		mgs(n_, j-1, V_, V_+j-1, 1);
 		mgs(n_, k,   Q_, V_+j-1, 1);
@@ -407,11 +410,11 @@ void JDQZ<Matrix>::solve()
 	
 	// --- Did enough eigenpairs converge? ---
 	if (kmax_ != k)
-		std::cout << " --- less eigenvalues have converged than requested --- \n";
+		PRINT(" --- less eigenvalues have converged than requested --- ");
 
 	kmax_ = k;
 	if (step >= maxstep_)
-		std::cout << " --- maximum number of steps reached --- \n";
+		PRINT(" --- maximum number of steps reached --- ");
 		
 	if (wanted_)
 	{
@@ -581,7 +584,7 @@ void JDQZ<Matrix>::gmres(int n, int x, int r, int mxm, double &eps, int &mxmv,
 	int one  = 1;
 	
 	assert(mxm < maxm);
-
+	
 	complex ztmp, zdotc;
 	complex rcs(0,0);
 
@@ -722,7 +725,7 @@ void JDQZ<Matrix>::ortho(int n, int v, int w,
 		s1 = work_[w].norm();
 		
 		if (s1 < s0 / kappa)
-			std::cout << "WARNING: zero vector in mgs..." << std::endl;
+			PRINT("WARNING: zero vector in mgs...")
 	}
 	return; 
 }
@@ -787,30 +790,6 @@ void JDQZ<Matrix>::gegs(int N, Complex2D &A, Complex2D &B,
 	assert(INFO == 0);
 }
 
-
-//==================================================================
-template<typename Matrix>
-void JDQZ<Matrix>::printParameters()
-{
-	std::cout << "\nJDQZ Parameters:   " << std::endl;
-	std::cout << " | n_         " << n_ << std::endl;
-	std::cout << " | shift_     " << shift_ << std::endl;
-	std::cout << " | eps_       " << eps_ << std::endl;
-	std::cout << " | kmax_      " << kmax_ << std::endl;
-	std::cout << " | jmax_      " << jmax_ << std::endl;
-	std::cout << " | jmin_      " << jmin_ << std::endl;
-	std::cout << " | maxstep_   " << maxstep_ << std::endl;
-	std::cout << " | lock_      " << lock_ << std::endl;
-	std::cout << " | order_     " << order_ << std::endl;
-	std::cout << " | method_    " << method_ << std::endl;
-	std::cout << " | m_         " << m_ << std::endl;
-	std::cout << " | l_         " << l_ << std::endl;
-	std::cout << " | maxnmv_    " << maxnmv_ << std::endl;
-	std::cout << " | testspace_ " << testspace_ << std::endl;
-	std::cout << " | wanted_    " << wanted_ << std::endl;
-	std::cout << " | lwork_     " << lwork_ << '\n' << std::endl;	
-}
-
 //==================================================================
 template<typename Matrix>
 void JDQZ<Matrix>::setIndices()
@@ -836,4 +815,27 @@ void JDQZ<Matrix>::setIndices()
 	Kz_  = Z_   + kmax_;  // Matrix K^{-1}Z_k
 }
 
+//==================================================================
+template<typename Matrix>
+void JDQZ<Matrix>::printParameters()
+{
+	PRINT("\nJDQZ Parameters:   ");
+	PRINT(" | n_         " << n_ );
+	PRINT(" | shift_     " << shift_ );
+	PRINT(" | eps_       " << eps_ );
+	PRINT(" | kmax_      " << kmax_ );
+	PRINT(" | jmax_      " << jmax_ );
+	PRINT(" | jmin_      " << jmin_ );
+	PRINT(" | maxstep_   " << maxstep_ );
+	PRINT(" | lock_      " << lock_ );
+	PRINT(" | order_     " << order_ );
+	PRINT(" | method_    " << method_ );
+	PRINT(" | m_         " << m_ );
+	PRINT(" | l_         " << l_ );
+	PRINT(" | maxnmv_    " << maxnmv_ );
+	PRINT(" | testspace_ " << testspace_ );
+	PRINT(" | wanted_    " << wanted_ );
+	PRINT(" | lwork_     " << lwork_ << '\n' );	
+}
+  
 #endif
