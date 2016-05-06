@@ -632,6 +632,9 @@ void JDQZ<Matrix>::gmres(int n, int x, int r, int mxm, double &eps, int &mxmv,
 		work_[v].axpy(-1.0, work_[v+1]);
 
 		rnrm = work_[v].norm();
+
+		if (verbosity_ > 6)
+			WRITE("  jdqz->gmres: rnrm = " << rnrm << " nmv = " << nmv)
 	}
 	// --- return ---
 	eps  = rnrm / rnrm0;
