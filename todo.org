@@ -1,4 +1,7 @@
-* TODO Put tests in separate folder.
-* TODO Add second test problem from example code.
+* DONE Put tests in separate folder.
+  CLOSED: [2016-05-04 wo 22:18]
+* DONE Add second test problem from example code.
+  CLOSED: [2016-05-04 wo 22:18]
 * TODO Add one of my own problems to tests.
-* TODO Test the case where j == jmax, I don't think that part has been run yet.
+* DONE Test the case where j == jmax, I don't think that part has been run yet.
+  CLOSED: [2016-05-04 wo 22:18]

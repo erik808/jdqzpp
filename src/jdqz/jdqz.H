@@ -275,6 +275,8 @@ void JDQZ<Matrix>::solve()
 				targetb = zbeta;
 				ok = false;
 			}
+			if (verbosity_ > 4)
+				WRITE("JDQZ residual = " << rnrm << " step = " << step);
 
 			found   = (rnrm < eps_ && (j > 1 || k == kmax_ - 1));
 			attempt = found;
