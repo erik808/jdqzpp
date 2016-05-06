@@ -4,6 +4,7 @@
 #include "jdqz_decl.H"
 #include "jdqz_macros.H"
 #include <math.h>
+#include <iomanip>
 
 //==================================================================
 // LAPACK dependencies
@@ -277,12 +278,18 @@ void JDQZ<Matrix>::solve()
 
 			found   = (rnrm < eps_ && (j > 1 || k == kmax_ - 1));
 			attempt = found;
-
-			WRITE(" jdqz: step = " << step << " j = " << j 
-				  <<"   residual = " << rnrm);
-
+			
+			if (verbosity_ > 4)
+				WRITE("  step = " << std::setw(3) << step << "  j = "
+					  << std::setw(3) << j << "  residual = " << rnrm);
+			
 			if (found)
 			{
+				if (verbosity_ > 4)
+					WRITE("-- found eigenvalue: k = " << k << '\n'
+						  << "       alpha = " << zalpha << '\n'
+						  << "        beta = " << zbeta);
+
 				// --- increase the number of found evs ---
 				k++;
 				

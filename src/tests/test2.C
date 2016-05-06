@@ -31,6 +31,7 @@ TEST(JDQZ, Results)
 	list["Criterion for Ritz values"] = 0;
 	list["Linear solver"]             = 1;
 	list["GMRES search space"]        = 20;
+	list["Verbosity"]                 = 5;
 		
 	ParameterList params(list);
 	
