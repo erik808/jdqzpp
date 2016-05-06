@@ -104,8 +104,8 @@ void JDQZ<Matrix>::solve()
 {
 	if (!initialized_)
 	{
-		WRITE( "JDQZ: Parameters are not set, "
-			   << "setup()not called, RETURNING\n");
+		WRITE( "JDQZ: ERROR! Parameters are not set, "
+			   << "setup() not called, RETURNING\n");
 		return;
 	}
 	
@@ -275,8 +275,6 @@ void JDQZ<Matrix>::solve()
 				targetb = zbeta;
 				ok = false;
 			}
-			if (verbosity_ > 4)
-				WRITE("JDQZ residual = " << rnrm << " step = " << step);
 
 			found   = (rnrm < eps_ && (j > 1 || k == kmax_ - 1));
 			attempt = found;
@@ -383,11 +381,11 @@ void JDQZ<Matrix>::solve()
 	}
 	
 	// --- Did enough eigenpairs converge? ---
-	if (kmax_ != k)
+	if (kmax_ != k && verbosity_ > 0) 
 		WRITE(" --- less eigenvalues have converged than requested --- ");
 
 	kmax_ = k;
-	if (step >= maxstep_)
+	if (step >= maxstep_  && verbosity_ > 0)
 		WRITE(" --- maximum number of steps reached --- ");
 		
 	if (wanted_)
@@ -698,7 +696,7 @@ void JDQZ<Matrix>::ortho(int n, int v, int w,
 		work_[w].axpy(-tmp, work_[v]);
 		s1 = work_[w].norm();
 		
-		if (s1 < s0 / kappa)
+		if (s1 < s0 / kappa  && verbosity_ > 0)
 			WRITE("WARNING: zero vector in mgs...")
 	}
 	return; 
