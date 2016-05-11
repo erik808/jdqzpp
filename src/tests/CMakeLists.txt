@@ -41,7 +41,7 @@ target_link_libraries (test_jdqz_1 PUBLIC ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries (test_jdqz_2 PUBLIC ${CMAKE_THREAD_LIBS_INIT})
 
 # Lapack
-if ($ENV{PLAT} MATCHES "cartesius")
+if ($ENV{PLAT} MATCHES "cartesius" OR $ENV{PLAT} MATCHES "imac")
   message("-- Get libraries from Trilinos")
   # Trying to find Trilinos
   if (DEFINED ENV{TRILINOS_DIR})
