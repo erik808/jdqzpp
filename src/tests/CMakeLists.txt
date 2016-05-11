@@ -42,32 +42,19 @@ target_link_libraries (test_jdqz_2 PUBLIC ${CMAKE_THREAD_LIBS_INIT})
 
 # Lapack
 find_package(LAPACK)
-if (LAPACK_FOUND)
 
-  target_link_libraries(test_jdqz_1 PUBLIC ${LAPACK_LIBRARIES})
-  target_link_libraries(test_jdqz_2 PUBLIC ${LAPACK_LIBRARIES})
-
-else ()
-  message("-- Lapack not found, trying Trilinos")
-  
-  # Trying to find Trilinos
-  if (DEFINED ENV{TRILINOS_DIR})
-	set(Trilinos_DIR $ENV{TRILINOS_DIR}/lib/cmake/Trilinos)
-	message("-- Trilinos directory: " ${Trilinos_DIR})
-  endif ()
-  find_package(Trilinos)
-  
-  if (NOT Trilinos_FOUND)
-	message(FATAL_ERROR " Trilinos root directory should be in PATH or TRILINOS_DIR.")
-  endif ()
-
-  include_directories(${Trilinos_TPL_INCLUDE_DIRS})
-  
-  target_link_libraries(test_jdqz_1 PUBLIC ${TRILINOS_TPL_LIBRARIES})
-  target_link_libraries(test_jdqz_2 PUBLIC ${TRILINOS_TPL_LIBRARIES})
-  
+if (NOT LAPACK_FOUND AND ENV{PLAT} MATCHES "cartesius")
+  message("-- Hardcoding libraries for cartesius")
+  set(LAPACK_LIBRARIES mkl_intel_lp64 mkl_intel_thread mkl_core
+	pthread mkl_intel_lp64 mkl_intel_thread	mkl_core
+	pthread
+	/usr/lib64/libhwloc.so mkl_intel_lp64 mkl_intel_thread
+	mkl_core pthread
+	)
 endif ()
 
+target_link_libraries(test_jdqz_1 PUBLIC ${LAPACK_LIBRARIES})
+target_link_libraries(test_jdqz_2 PUBLIC ${LAPACK_LIBRARIES})
 
 set(TEST_INCL_DIRS ../jdqz)
 
