@@ -41,7 +41,15 @@ target_link_libraries (test_jdqz_1 PUBLIC ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries (test_jdqz_2 PUBLIC ${CMAKE_THREAD_LIBS_INIT})
 
 # Lapack
-find_package(LAPACK)
+if (NOT DEFINED ENV{Trilinos_TPL_LIBRARY_DIRS})
+  find_package(LAPACK)
+  if (NOT LAPACK_FOUND)
+	message(FATAL_ERROR "-- Lapack not found ")
+  endif()
+else ()
+  set(LAPACK_LIBRARIES ${Trilinos_TPL_LIBRARY_DIRS})
+endif()
+  
 target_link_libraries(test_jdqz_1 PUBLIC ${LAPACK_LIBRARIES})
 target_link_libraries(test_jdqz_2 PUBLIC ${LAPACK_LIBRARIES})
 
