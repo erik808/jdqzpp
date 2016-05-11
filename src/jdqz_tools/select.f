@@ -108,7 +108,7 @@ c
             end if
          enddo
       else
-         write(*,*) "unknown order in select"
+         write(*,*)  "unknown order in select"
       endif
       select = j
 c     

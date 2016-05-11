@@ -2,6 +2,51 @@ cmake_minimum_required(VERSION 2.8.9)
 
 enable_testing()
 
+# Lapack
+# --> For now I hardcode a few things I need on cartesius
+# --> When I find out how to detect these I will do that
+if ($ENV{PLAT} MATCHES "cartesius") 
+  message("-- Get info from Trilinos")
+
+  # Trying to find Trilinos
+  if (DEFINED ENV{TRILINOS_DIR})
+	set(Trilinos_DIR $ENV{TRILINOS_DIR}/lib/cmake/Trilinos)
+	message("-- Trilinos directory: " ${Trilinos_DIR})
+  endif ()
+  
+  find_package(Trilinos)
+
+  if (NOT Trilinos_FOUND)
+	message(FATAL_ERROR " Trilinos root directory should be in PATH or TRILINOS_DIR.")
+  endif ()
+  
+  if (NOT DEFINED ${CMAKE_CXX_COMPILER})
+	set(CMAKE_CXX_COMPILER ${Trilinos_CXX_COMPILER})
+  endif ()
+
+  message("-- CXX compiler: ${CMAKE_CXX_COMPILER}")
+  
+  if (NOT DEFINED ${CMAKE_Fortran_COMPILER})
+	set(CMAKE_Fortran_COMPILER ${Trilinos_Fortran_COMPILER})
+  endif ()
+
+  message("-- Fortran compiler: ${CMAKE_Fortran_COMPILER}")
+  
+  set(LAPACK_LIBRARIES
+	mkl_intel_lp64
+	mkl_intel_thread
+	mkl_core
+	iomp5
+	pthread )
+  
+else ()
+  
+  find_package(LAPACK)
+  if (NOT LAPACK_FOUND)
+	message(FATAL_ERROR "Lapack not found")
+  endif ()  
+endif ()
+
 # Enable fortran
 get_property(languages GLOBAL PROPERTY ENABLED_LANGUAGES)
 if (NOT languages MATCHES "Fortran")
@@ -11,19 +56,22 @@ endif ()
 get_property(languages GLOBAL PROPERTY ENABLED_LANGUAGES)
 message("-- Languages: ${languages}")
 
-# Set CXX flags
-if (NOT DEFINED ${CMAKE_CXX_FLAGS})
-  set(CMAKE_CXX_FLAGS "-g -Wall -std=c++11 -O0")  
+# Set Fortran flags
+if (NOT DEFINED ${CMAKE_Fortran_FLAGS})
+  if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU") #gfortran, gcc
+	set (CMAKE_Fortran_FLAGS
+	  "-g -u -O0 -ffixed-line-length-132 -fdefault-real-8 -ffree-line-length-none -DASCII_TOPO")
+  elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Intel") #ifort, icc
+	set (CMAKE_Fortran_FLAGS "-g -r8 -O3 -DASCII_TOPO -DWITH_UNION -heap-arrays 1 -extend-source 132")
+  endif ()
 endif ()
 
-# Set Fortran flags
-# Depend on the compiler
-if (NOT DEFINED ${CMAKE_Fortran_FLAGS})
-  get_filename_component(Fortran_COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
-  if (Fortran_COMPILER_NAME MATCHES "gfortran.*") #gfortran
-	set (CMAKE_Fortran_FLAGS "-g -u -O0")
-  elseif (Fortran_COMPILER_NAME MATCHES "ifort.*") #ifort
-	set (CMAKE_Fortran_FLAGS "")
+# Set CXX flags
+if (NOT DEFINED ${CMAKE_CXX_FLAGS})
+  if (CMAKE_CXX_COMPILER_ID MATCHES "GNU") #gfortran, gcc
+	set (CMAKE_CXX_FLAGS "-g -std=c++11 -O0 -Wall")
+  elseif (CMAKE_CXX_COMPILER_ID MATCHES "Intel") #ifort, icc
+	set (CMAKE_CXX_FLAGS "-std=c++11 -O3 -DMPICH_SKIP_MPICXX")
   endif ()
 endif ()
 
