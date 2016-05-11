@@ -14,13 +14,22 @@ target_link_libraries (test_jdqz_1 PUBLIC jdqz_tools)
 target_link_libraries (test_jdqz_2 PUBLIC jdqz_tools)
 
 # Google test
-find_package(GTest)
+if (NOT GTEST_FOUND)
+  find_package(GTest)
+endif ()
 
 if (NOT GTEST_FOUND)
-  set(GTEST_ROOT "$ENV{SHARED_DIR}")
+  if (DEFINED ENV{GTEST_DIR})
+	message("-- GTest not automatically found, trying $ENV{GTEST_DIR}")
+	set(GTEST_ROOT "$ENV{GTEST_DIR}")
+  else ()
+	message("-- GTest not automatically found, GTEST_DIR not set, trying $ENV{SHARED_DIR}")
+	set(GTEST_ROOT "$ENV{SHARED_DIR}")
+  endif ()
+  
   unset(GTEST_INCLUDE_DIR CACHE) #FindGTEST quirk
   find_package(GTest)
-endif (NOT GTEST_FOUND)
+endif ()
 
 include_directories(${GTEST_INCLUDE_DIRS})
 target_link_libraries (test_jdqz_1 PUBLIC ${GTEST_LIBRARIES})
