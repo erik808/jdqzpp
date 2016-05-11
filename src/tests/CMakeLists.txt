@@ -59,7 +59,11 @@ if ($ENV{PLAT} MATCHES "cartesius")
   include_directories(${Trilinos_TPL_INCLUDE_DIRS})
   
 else ()
+  
   find_package(LAPACK)
+  if (NOT LAPACK_FOUND)
+	message(FATAL_ERROR "Lapack not found")
+  endif ()  
 endif ()
 
 target_link_libraries(test_jdqz_1 PUBLIC ${LAPACK_LIBRARIES})
