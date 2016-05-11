@@ -41,7 +41,7 @@ target_link_libraries (test_jdqz_1 PUBLIC ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries (test_jdqz_2 PUBLIC ${CMAKE_THREAD_LIBS_INIT})
 
 # Lapack
-if (ENV{PLAT} MATCHES "cartesius")
+if ($ENV{PLAT} MATCHES "cartesius")
   message("-- Hardcoding libraries for cartesius")
   set(LAPACK_LIBRARIES mkl_intel_lp64 mkl_intel_thread mkl_core
 	pthread mkl_intel_lp64 mkl_intel_thread	mkl_core
