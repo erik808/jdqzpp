@@ -31,7 +31,7 @@ if (NOT GTEST_FOUND)
   find_package(GTest)
 endif ()
 
-include_directories(${GTEST_INCLUDE_DIRS})
+include_directories   (${GTEST_INCLUDE_DIRS})
 target_link_libraries (test_jdqz_1 PUBLIC ${GTEST_LIBRARIES})
 target_link_libraries (test_jdqz_2 PUBLIC ${GTEST_LIBRARIES})
 
@@ -41,18 +41,33 @@ target_link_libraries (test_jdqz_1 PUBLIC ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries (test_jdqz_2 PUBLIC ${CMAKE_THREAD_LIBS_INIT})
 
 # Lapack
-if (NOT DEFINED TPL_LIBRARIES)
-  find_package(LAPACK)
-  set(TPL_LIBRARIES ${LAPACK_LIBRARIES})
-  if (NOT LAPACK_FOUND)
-	message(FATAL_ERROR "-- Lapack not found ")
-  endif()
-endif()
+find_package(LAPACK)
+if (LAPACK_FOUND)
 
-message("-- TPL: ${TPL_LIBRARIES}")
+  target_link_libraries(test_jdqz_1 PUBLIC ${LAPACK_LIBRARIES})
+  target_link_libraries(test_jdqz_2 PUBLIC ${LAPACK_LIBRARIES})
 
-target_link_libraries(test_jdqz_1 PUBLIC ${TPL_LIBRARIES})
-target_link_libraries(test_jdqz_2 PUBLIC ${TPL_LIBRARIES})
+else ()
+  message("-- Lapack not found, trying Trilinos")
+  
+  # Trying to find Trilinos
+  if (DEFINED ENV{TRILINOS_DIR})
+	set(Trilinos_DIR $ENV{TRILINOS_DIR}/lib/cmake/Trilinos)
+	message("-- Trilinos directory: " ${Trilinos_DIR})
+  endif ()
+  find_package(Trilinos)
+  
+  if (NOT Trilinos_FOUND)
+	message(FATAL_ERROR " Trilinos root directory should be in PATH or TRILINOS_DIR.")
+  endif ()
+
+  include_directories(${Trilinos_TPL_INCLUDE_DIRS})
+  
+  target_link_libraries(test_jdqz_1 PUBLIC ${TRILINOS_TPL_LIBRARIES})
+  target_link_libraries(test_jdqz_2 PUBLIC ${TRILINOS_TPL_LIBRARIES})
+  
+endif ()
+
 
 set(TEST_INCL_DIRS ../jdqz)
 
