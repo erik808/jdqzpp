@@ -49,7 +49,7 @@ if (NOT DEFINED TPL_LIBRARIES)
   endif()
 endif()
 
-message("-- TPL: ")
+message("-- TPL: ${TPL_LIBRARIES}")
 
 target_link_libraries(test_jdqz_1 PUBLIC ${TPL_LIBRARIES})
 target_link_libraries(test_jdqz_2 PUBLIC ${TPL_LIBRARIES})
