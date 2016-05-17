@@ -44,6 +44,8 @@ TEST(JDQZ, Results)
 	std::vector<std::complex<double> > beta  = jdqz.getBeta();
 
 	std::cout << jdqz.kmax() << " converged eigenvalues\n\n";
+
+	EXPECT_EQ(jdqz.kmax(), 5);
 	
 	for (int j = 0; j != jdqz.kmax(); ++j)
 	{
@@ -53,7 +55,7 @@ TEST(JDQZ, Results)
 		residue.scale(beta[j]);
 		testmat.BMUL(eivec[j], tmp);
 		residue.axpy(-alpha[j], tmp);
-		std::cout << "alpha: " <<  std::setw(20) << alpha[j]
+		std::cout << "alpha: " << std::setw(20) << alpha[j]
 				  << " beta: " << std::setw(20) << beta[j]
 				  << " " << residue.norm() << std::endl;
 		
