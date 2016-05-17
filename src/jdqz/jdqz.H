@@ -77,6 +77,16 @@ JDQZ(Matrix &matrix, Vector &initial)
 	initialized_(false)
 {}
 
+
+//==================================================================
+// constructor
+template<typename Matrix>
+JDQZ<Matrix>::
+~JDQZ()
+{
+	WRITE( "JDQZ: Destructor called" );
+}
+
 //==================================================================
 template<typename Matrix>
 void JDQZ<Matrix>::setup()

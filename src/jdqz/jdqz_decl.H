@@ -112,9 +112,10 @@ class JDQZ
 	int verbosity_;
 	
 public:
-
 	// constructor
 	JDQZ(Matrix &matrix, Vector &initial);
+
+	~JDQZ();
 	
 	void solve();
 
