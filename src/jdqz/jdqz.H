@@ -298,7 +298,7 @@ void JDQZ<Matrix>::solve()
 				if (verbosity_ > 4)
 					WRITE("-- found eigenvalue: k = " << k << '\n'
 						  << "       alpha = " << zalpha << '\n'
-						  << "        beta = " << zbeta);
+						  << "        beta = " << zbeta << '\n');
 
 				// --- increase the number of found evs ---
 				k++;
