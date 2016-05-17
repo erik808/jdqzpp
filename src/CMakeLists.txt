@@ -60,9 +60,9 @@ message("-- Languages: ${languages}")
 if (NOT DEFINED ${CMAKE_Fortran_FLAGS})
   if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU") #gfortran, gcc
 	set (CMAKE_Fortran_FLAGS
-	  "-g -u -O0 -ffixed-line-length-132 -fdefault-real-8 -ffree-line-length-none -DASCII_TOPO")
+	  "-g -u -O0 -ffixed-line-length-132 -ffree-line-length-none")
   elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Intel") #ifort, icc
-	set (CMAKE_Fortran_FLAGS "-g -r8 -O3 -DASCII_TOPO -DWITH_UNION -heap-arrays 1 -extend-source 132")
+	set (CMAKE_Fortran_FLAGS "-g -O3 -heap-arrays 1 -extend-source 132")
   endif ()
 endif ()
 
