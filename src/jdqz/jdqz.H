@@ -84,7 +84,7 @@ template<typename Matrix>
 JDQZ<Matrix>::
 ~JDQZ()
 {
-	WRITE( "JDQZ: Destructor called" );
+	WRITE( "JDQZ: Destructor called..." );
 }
 
 //==================================================================
