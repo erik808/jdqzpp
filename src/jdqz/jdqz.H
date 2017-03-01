@@ -93,14 +93,10 @@ void JDQZ<Matrix>::setup()
 {
 	// setup workspace
 	initial_.zero();
-	work_ = std::vector<Vector>(lwork_, Vector());
-	for (int i = 0; i != lwork_; ++i)
-		work_[i] = initial_;
+	work_ = std::vector<Vector>(lwork_, Vector(initial_));
 	
 	// setup solution
-	eivec_ = std::vector<Vector>(kmax_, Vector());
-	for (int i = 0; i != kmax_; ++i)
-		eivec_[i] = initial_;
+	eivec_ = std::vector<Vector>(kmax_, Vector(initial_));
 	
 	// set the indices for specific components in the workspace
 	setIndices();
