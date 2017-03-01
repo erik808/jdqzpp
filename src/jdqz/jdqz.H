@@ -84,7 +84,7 @@ template<typename Matrix>
 JDQZ<Matrix>::
 ~JDQZ()
 {
-	WRITE( "JDQZ: Destructor called" );
+	WRITE( "JDQZ: Destructor called..." );
 }
 
 //==================================================================
@@ -515,7 +515,7 @@ void JDQZ<Matrix>::gemm(int m, int n, int k, complex alpha, int A,
 						complex *B, int ldb, complex beta,
 						std::vector<Vector> &C)
 {
-	assert(C.size() >= n);
+	assert((int) C.size() >= n);
 	for (int j = 0; j != n; ++j)
 	{
 		C[j].scale(beta);
@@ -758,7 +758,7 @@ void JDQZ<Matrix>::gegs(int N, Complex2D &A, Complex2D &B,
 	assert(LDA == LDVSL);
 	assert(LDA == LDVSR);
 	assert(LWORK >= std::max(1, 2*N));
-	assert(rwork.size() >= std::max(1, 3*N));
+	assert((int) rwork.size() >= std::max(1, 3*N));
 	
 	char JOBVSL = 'V'; // compute left  Schur vectors
 	char JOBVSR = 'V'; // compute right Schur vectors
@@ -801,8 +801,8 @@ template<typename Matrix>
 template<typename PList>
 void JDQZ<Matrix>::setParameters(PList &params)
 {
-	n_ = params.get("Problem size", mat_.size());
-	assert(n_ == mat_.size());
+	n_ = params.get("Problem size", (int) mat_.size());
+	assert(n_ == (int) mat_.size());
 	
 	double shiftRe = params.get("Shift (real part)", 0.0);
 	double shiftIm = params.get("Shift (imaginary part)", 0.0);
