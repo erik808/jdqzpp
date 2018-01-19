@@ -122,7 +122,7 @@ void JDQZ<Matrix>::solve()
 	int k         = 0;
 	int j         = 0;
 	int mxmv      = 0;
-	int ldvs      = 50;
+	int ldvs      = std::max(50, jmax_);
 	int ldzwork   = 4*ldvs;
 	int ldqkz     = ldvs;
 	int itmp      = 0;
@@ -178,9 +178,8 @@ void JDQZ<Matrix>::solve()
 		if (j == 0)
 		{
 			// Initialize search and test space with random real part
-			// and zero imaginary part. Values uniform in [-1,1].
-			// TODO
-			//--> right now we use ones in the example code for comparison
+			// and zero imaginary part. Values uniform in [-1,1]. For
+			// the test vector we use ones.
 			work_[V_].random();
 		}
 		else 
@@ -556,12 +555,10 @@ void JDQZ<Matrix>::gmres(int n, int x, int r, int mxm, double &eps, int &mxmv,
 						 Complex1D &f, int v, int tp)
 {
 	// -- some initializations --- 
-	int maxm = 100;
+	int maxm = std::max(100, mxm + 1);
 	int nmv  = 0;
 	int m, m1;
 	int one  = 1;
-	
-	assert(mxm < maxm);
 	
 	complex ztmp, zdotc;
 	complex rcs(0,0);
