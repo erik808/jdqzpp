@@ -177,6 +177,8 @@ void JDQZ<Matrix>::solve()
 	
 	while (k < kmax_ && step < maxstep_)
 	{
+        timerStart("jdqz main iteration");
+        
 		step++;
 		solvestep++;
 		if (j == 0)
@@ -242,6 +244,7 @@ void JDQZ<Matrix>::solve()
 		bool attempt = true;
 		while (attempt)
 		{
+            timerStart("jdqz attempt");
 			// --- Sort the Petrov pairs ---
 			qzsort(targeta, targetb, j, zma, zmb,
 				   vsl, vsr, ldvs, alpha, beta, order_);
@@ -287,13 +290,15 @@ void JDQZ<Matrix>::solve()
 
 			found   = (rnrm < eps_ && (j > 1 || k == kmax_ - 1));
 			attempt = found;
+
+            timerStop("jdqz attempt");
 			
 			if (verbosity_ > 4)
 				WRITE("  step = " << std::setw(3) << step << "  j = "
 					  << std::setw(3) << j << "  residual = " << rnrm);
 			
 			if (found)
-			{
+			{                
 				if (verbosity_ > 4)
 					WRITE("\n-- found eigenvalue: k = " << k << '\n'
 						  << "       alpha = " << zalpha << '\n'
@@ -310,6 +315,9 @@ void JDQZ<Matrix>::solve()
 				solvestep = 0;
 				
 				if (k == kmax_) break; // break from this while loop
+
+                timerStart("jdqz next ev");
+
 				
 				gemm(n_, j-1, j, 1.0, V_, &vsr(0,1), ldvs, 0.0, Aux_);
 				
@@ -355,9 +363,12 @@ void JDQZ<Matrix>::solve()
 				ok = true;
 				mxmv = 0;
 				deps = 1.0;
+                
+                timerStop("jdqz next ev");
 			}
 			else if (j == jmax_)
 			{
+                timerStart("jdqz reduce j");
 				gemm(n_, jmin_, j, 1.0, V_, &vsr[0], ldvs, 0.0, Aux_);
 				itmp  = V_;
 				V_    = Aux_;
@@ -385,8 +396,10 @@ void JDQZ<Matrix>::solve()
 				
 				zlaset_("A", &j, &j, &zzero, &zone, &vsr[0], &ldvs);
 				zlaset_("A", &j, &j, &zzero, &zone, &vsl[0], &ldvs);
+                timerStop("jdqz reduce j");
 			}
 		}
+        timerStop("jdqz main iteration");
 	}
 	
 	// --- Did enough eigenpairs converge? ---
@@ -450,6 +463,7 @@ void JDQZ<Matrix>::makeqkz(int n, int k, int Q, int Kq, Complex2D &qkz,
 						   Complex2D &invqkz, int ldqkz,
 						   std::vector<int> &ipiv)
 {
+    timerStart("jdqz makeqkz");
 	for (int i = 0; i != k; ++i)
 		for (int j = 0; j != k; ++j)
 		{
@@ -462,6 +476,7 @@ void JDQZ<Matrix>::makeqkz(int n, int k, int Q, int Kq, Complex2D &qkz,
 
 	int info = 0;
 	zgetrf_(&k, &k, &invqkz[0], &ldqkz, &ipiv[0], &info);
+    timerStop("jdqz makeqkz");
 }
 
 //==================================================================
@@ -470,9 +485,13 @@ template<typename Matrix>
 void JDQZ<Matrix>::gemv(int m, int n, complex alpha, int A,
 						complex *X, complex beta, int Y)
 {
+    timerStart("jdqz gemv");
+    
 	work_[Y].scale(beta);
 	for (int i = 0; i != n; ++i)
 		work_[Y].axpy(alpha * X[i], work_[A+i]);
+    
+    timerStop("jdqz gemv");
 }
 
 //==================================================================
@@ -481,9 +500,11 @@ template<typename Matrix>
 void JDQZ<Matrix>::gemv(int m, int n, complex alpha, int A,
 						int X, complex beta, Complex1D &Y)
 {
+    timerStart("jdqz gemv");
 	Y.scale(beta);
 	for (int i = 0; i != n; ++i)
 		Y[i] += alpha * work_[A+i].dot(work_[X]);
+    timerStop("jdqz gemv");
 }
 
 //==================================================================
@@ -492,11 +513,13 @@ template<typename Matrix>
 void JDQZ<Matrix>::gemv(int m, int n, complex alpha, int A,
 						int X, complex beta, complex *Y)
 {
+    timerStart("jdqz gemv");
 	for (int i = 0; i != n; ++i)
 	{
 		Y[i] *= beta;
 		Y[i] += alpha * work_[A+i].dot(work_[X]);
 	}
+    timerStop("jdqz gemv");
 }
 
 //==================================================================
@@ -505,12 +528,14 @@ template<typename Matrix>
 void JDQZ<Matrix>::gemm(int m, int n, int k, complex alpha, int A,
 						complex *B, int ldb, complex beta, int C)
 {
+    timerStart("jdqz gemm");
 	for (int j = 0; j != n; ++j)
 	{
 		work_[C+j].scale(beta);
 		for (int i = 0; i != k; ++i)			
 			work_[C+j].axpy(alpha * B[i+ldb*j], work_[A+i]);
 	}
+    timerStop("jdqz gemm");
 }
 
 //==================================================================
@@ -520,6 +545,7 @@ void JDQZ<Matrix>::gemm(int m, int n, int k, complex alpha, int A,
 						complex *B, int ldb, complex beta,
 						std::vector<Vector> &C)
 {
+    timerStart("jdqz gemm");
 	assert((int) C.size() >= n);
 	for (int j = 0; j != n; ++j)
 	{
@@ -527,6 +553,7 @@ void JDQZ<Matrix>::gemm(int m, int n, int k, complex alpha, int A,
 		for (int i = 0; i != k; ++i)
 			C[j].axpy(alpha * B[i+ldb*j], work_[A+i]);
 	}
+    timerStop("jdqz gemm");
 }
 
 //==================================================================
@@ -536,6 +563,8 @@ void JDQZ<Matrix>::qzsort(complex ta, complex tb, int k,
 						  Complex2D &q, int ldz, Complex1D &alpha,
 						  Complex1D &beta, int order)
 {
+    timerStart("jdqz qzsort");
+    
 	// In this interface we should be careful
 	// with 1 and 0 based calls...
 	int j = 0;
@@ -551,6 +580,8 @@ void JDQZ<Matrix>::qzsort(complex ta, complex tb, int k,
 		j = select_(&N, &ta, &tb, &alpha[i-1], &beta[i-1], &order) + i-1;		
 		myexc_(&k, &s[0], &t[0], &z[0], &q[0], &ldz, &j, &i);		
 	}
+    
+    timerStop("jdqz qzsort");
 }
 
 //==================================================================
@@ -830,7 +861,7 @@ void JDQZ<Matrix>::timerStart(std::string const &msg)
 {
     if (!profile_) return;
     
-    JDQZTimer timer;
+    JDQZTimer timer(msg);
     timer.resetStartTime();
     if (profileData_.find(msg) == profileData_.end())
         profileData_[msg] = std::array<double, PROFILE_ENTRIES>();
@@ -844,6 +875,17 @@ void JDQZ<Matrix>::timerStop(std::string const &msg)
     if (!profile_) return;
 
     double time = timerStack_.top().elapsedTime();
+
+    bool sane = true;;
+    if (!(msg == timerStack_.top().label()))
+    {
+        WRITE("Warning: msg and label not equal!");
+        WRITE("   msg = " << msg);
+        WRITE(" label = " << timerStack_.top().label());
+        sane = false;
+    }
+    assert(sane);
+           
     timerStack_.pop();
     profileData_[msg][0] += time;
     profileData_[msg][1] += 1;
@@ -915,8 +957,19 @@ template<typename Matrix>
 void JDQZ<Matrix>::printProfile(std::string const &filename)
 {
     if (!profile_) return;
+
+    // check if timerstack is sane
+    bool sane = true;
+    while (!timerStack_.empty())
+    {
+        WRITE("Warning: timerStack_ not empty!");
+        timerStack_.top().printLabel();
+        timerStack_.pop();
+        sane = false;           
+    }
+    assert(sane);
+
     
-    assert(timerStack_.empty());
     // setting up a filename
     std::ostringstream profilefile(filename);
     // setup output file

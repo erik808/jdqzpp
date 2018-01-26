@@ -293,10 +293,12 @@ public:
 class JDQZTimer
 {
 	double startTime_;
+    std::string label_;
 public:
-	JDQZTimer()
+	JDQZTimer(std::string const &label)
 		:
-		startTime_(0.0)
+		startTime_(0.0),
+        label_(label)
 		{}
 	
 	double wallTime()
@@ -318,6 +320,11 @@ public:
 	
 	double elapsedTime()
 		{ return (double) (wallTime() - startTime_); }
+
+    void printLabel()
+        { WRITE(" Timer: " << label_); }
+
+    std::string label() { return label_;}
 };
 
 #endif
