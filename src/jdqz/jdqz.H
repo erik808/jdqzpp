@@ -830,7 +830,7 @@ void JDQZ<Matrix>::timerStart(std::string const &msg)
 {
     if (!profile_) return;
     
-    Timer timer;
+    JDQZTimer timer;
     timer.resetStartTime();
     if (profileData_.find(msg) == profileData_.end())
         profileData_[msg] = std::array<double, PROFILE_ENTRIES>();

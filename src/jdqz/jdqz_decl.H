@@ -13,7 +13,7 @@ typedef std::complex<double> complex;
 
 class Complex1D;
 class Complex2D;
-class Timer;
+class JDQZTimer;
 
 // This is (going to be) a templated port of
 // the original JDQZ code by Fokkema and van Gijzen.
@@ -129,7 +129,7 @@ class JDQZ
     ProfileType profileData_;
     
     // timer stack to enable nested timings
-    std::stack<Timer> timerStack_;
+    std::stack<JDQZTimer> timerStack_;
     //-------------------------------------------------------
 
 public:
@@ -290,11 +290,11 @@ public:
 
 //==================================================================
 // Timer class
-class Timer
+class JDQZTimer
 {
 	double startTime_;
 public:
-	Timer()
+	JDQZTimer()
 		:
 		startTime_(0.0)
 		{}
