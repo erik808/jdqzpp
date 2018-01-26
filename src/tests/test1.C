@@ -167,7 +167,7 @@ TEST(JDQZ, Results)
 		testmat.BMUL(eivec[j], tmp);
 		residue.axpy(-alpha[j], tmp);
 		EXPECT_NEAR(residue.norm(), example_norms[j], 1e-14);
-	}	
+	}
 }
 
 //------------------------------------------------------------------

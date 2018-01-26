@@ -32,12 +32,14 @@ TEST(JDQZ, Results)
 	list["Linear solver"]             = 1;
 	list["GMRES search space"]        = 20;
 	list["Verbosity"]                 = 5;
+    list["Profile"]                   = 1;
 		
 	ParameterList params(list);
 	
 	jdqz.setParameters(params);
 	jdqz.printParameters();
 	jdqz.solve();
+    jdqz.printProfile("jdqz_profile");
 	
 	std::vector<TestVector>            eivec = jdqz.getEigenVectors();
 	std::vector<std::complex<double> > alpha = jdqz.getAlpha();
