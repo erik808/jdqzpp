@@ -9,6 +9,8 @@ matrix:
             - g++-4.9
             - cmake-data
             - cmake
+            - liblapack-dev
+            - gfortran
       env:
          - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
 
