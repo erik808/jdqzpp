@@ -1,0 +1,22 @@
+# - Config file for the JDQZPP package
+# It defines the following variables
+#  JDQZPP_INCLUDE_DIRS - include directories for JDQZPP
+#  JDQZPP_LIBRARIES    - libraries to link against
+#  JDQZPP_EXECUTABLE   - the bar executable
+ 
+# Compute paths
+get_filename_component(JDQZPP_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+
+include("${JDQZPP_CMAKE_DIR}/JDQZPPTargets.cmake")
+
+@PACKAGE_INIT@
+
+set_and_check(JDQZPP_INCLUDE_DIR "@PACKAGE_INCLUDE_INSTALL_DIR@")
+
+set(JDQZPP_INCLUDE_DIRS "${JDQZPP_INCLUDE_DIR}")
+
+# TODO: I want this to be less ugly. I'm looking for a function or
+# variable that lists all libraries
+set(JDQZPP_LIBRARIES @library_list@)
+
+check_required_components(JDQZPP)
