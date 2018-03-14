@@ -1,5 +1,41 @@
 #enable_testing()
 
+# Google test
+INCLUDE(ExternalProject)
+
+SET_DIRECTORY_PROPERTIES(PROPERTIES EP_PREFIX ${CMAKE_BINARY_DIR}/third_party)
+
+ExternalProject_Add(
+  googletest
+  GIT_REPOSITORY https://github.com/google/googletest.git
+  GIT_TAG release-1.8.0
+  INSTALL_COMMAND ""
+  LOG_DOWNLOAD ON
+  LOG_CONFIGURE ON
+  LOG_BUILD ON)
+
+ExternalProject_Get_Property(googletest source_dir)
+set(GTEST_INCLUDE_DIRS ${source_dir}/googletest/include)
+
+ExternalProject_Get_Property(googletest binary_dir)
+set(GTEST_LIBRARY_PATH ${binary_dir}/googlemock/gtest/${CMAKE_FIND_LIBRARY_PREFIXES}gtest.a)
+set(GTEST_MAIN_LIBRARY_PATH ${binary_dir}/googlemock/gtest/${CMAKE_FIND_LIBRARY_PREFIXES}gtest_main.a)
+set(GTEST_LIBRARY gtest)
+set(GTEST_MAIN_LIBRARY gtest_main)
+set(GTEST_BOTH_LIBRARIES gtest gtest_main)
+
+add_library(${GTEST_LIBRARY} UNKNOWN IMPORTED)
+set_property(TARGET ${GTEST_LIBRARY} PROPERTY IMPORTED_LOCATION
+  ${GTEST_LIBRARY_PATH})
+add_dependencies(${GTEST_LIBRARY} googletest)
+
+add_library(${GTEST_MAIN_LIBRARY} UNKNOWN IMPORTED)
+set_property(TARGET ${GTEST_MAIN_LIBRARY} PROPERTY IMPORTED_LOCATION
+  ${GTEST_MAIN_LIBRARY_PATH})
+add_dependencies(${GTEST_MAIN_LIBRARY} googletest)
+
+include_directories(${GTEST_INCLUDE_DIRS})
+
 add_executable(test_jdqz_1 test1.C)
 add_executable(test_jdqz_2 test2.C)
 
@@ -13,28 +49,8 @@ add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND}
 target_link_libraries (test_jdqz_1 PUBLIC jdqz_tools)
 target_link_libraries (test_jdqz_2 PUBLIC jdqz_tools)
 
-# Google test
-if (NOT GTEST_FOUND)
-  find_package(GTest)
-endif ()
-
-if (NOT GTEST_FOUND)
-  if (DEFINED ENV{GTEST_DIR})
-	message("-- GTest not automatically found, trying $ENV{GTEST_DIR}")
-	set(GTEST_ROOT "$ENV{GTEST_DIR}")
-  else ()
-	message("-- GTest not automatically found, GTEST_DIR not set, trying $ENV{SHARED_DIR}")
-	set(GTEST_ROOT "$ENV{SHARED_DIR}")
-  endif ()
-  
-  unset(GTEST_INCLUDE_DIR CACHE) #FindGTEST quirk
-  find_package(GTest)
-endif ()
-
-include_directories(${GTEST_INCLUDE_DIRS})
-
-target_link_libraries (test_jdqz_1 PUBLIC ${GTEST_LIBRARIES})
-target_link_libraries (test_jdqz_2 PUBLIC ${GTEST_LIBRARIES})
+target_link_libraries (test_jdqz_1 PUBLIC ${GTEST_BOTH_LIBRARIES})
+target_link_libraries (test_jdqz_2 PUBLIC ${GTEST_BOTH_LIBRARIES})
 
 target_link_libraries(test_jdqz_1 PUBLIC ${LAPACK_LIBRARIES})
 target_link_libraries(test_jdqz_2 PUBLIC ${LAPACK_LIBRARIES})
