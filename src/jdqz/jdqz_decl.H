@@ -234,8 +234,8 @@ public:
 //  you can pass &array[0] to a lapack routine expecting a matrix.
 
 class Complex2D : public std::vector<std::complex<double> >
-	// row dimension
 {
+ 	// row dimension
 	size_t m_;
 	
 	// column dimension
