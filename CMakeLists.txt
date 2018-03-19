@@ -2,12 +2,30 @@ cmake_minimum_required (VERSION 2.8.9)
 
 project (jdqz)
 
+# Installation variables
+set(library_list)
+set(INCLUDE_INSTALL_DIR include)
+set(LIB_INSTALL_DIR lib)
+set(BIN_INSTALL_DIR bin)
+
+enable_testing()
+
 add_subdirectory (src)
 
-# If no CMAKE_INSTALl_PREFIX is available we set it to the current source dir
-# .i.e. project root
-if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    set (CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}" CACHE PATH "default install path" FORCE )
-endif ()
+# Install CMake configuration files
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}/JDQZPP/JDQZPPConfigVersion.cmake"
+  VERSION 0 COMPATIBILITY SameMajorVersion
+  )
 
-message ("-- Install prefix = ${CMAKE_INSTALL_PREFIX}")
+set(ConfigPackageLocation lib/cmake/JDQZPP)
+configure_package_config_file("${PROJECT_SOURCE_DIR}/cmake/JDQZPPConfig.cmake.in"
+  "${PROJECT_BINARY_DIR}/JDQZPPConfig.cmake" INSTALL_DESTINATION ${ConfigPackageLocation}
+  PATH_VARS INCLUDE_INSTALL_DIR)
+
+install(EXPORT JDQZPPTargets FILE JDQZPPTargets.cmake DESTINATION ${ConfigPackageLocation})
+install(FILES "${PROJECT_BINARY_DIR}/JDQZPPConfig.cmake"
+  "${CMAKE_CURRENT_BINARY_DIR}/JDQZPP/JDQZPPConfigVersion.cmake"
+  DESTINATION ${ConfigPackageLocation}
+  )

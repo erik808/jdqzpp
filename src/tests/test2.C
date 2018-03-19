@@ -64,12 +64,3 @@ TEST(JDQZ, Results)
 		EXPECT_NEAR(residue.norm(), 0, 1e-8);
 	}	
 }
-
-//------------------------------------------------------------------
-int main(int argc, char **argv)
-{
-	::testing::InitGoogleTest(&argc, argv);
-	int out = RUN_ALL_TESTS();
-	std::cout << "TEST exit code " << out << std::endl;
-	return out;
-}

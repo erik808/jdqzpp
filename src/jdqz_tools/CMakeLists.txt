@@ -1,7 +1,7 @@
 set (FORTRAN_SOURCES select.f myexc.f)
 
-add_library (jdqz_tools ${FORTRAN_SOURCES})
+add_library (jdqz_tools SHARED ${FORTRAN_SOURCES})
 
-target_include_directories (jdqz_tools PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+install(TARGETS jdqz_tools EXPORT JDQZPPTargets LIBRARY DESTINATION ${LIB_INSTALL_DIR})
 
-install(TARGETS jdqz_tools DESTINATION lib/)
+set(library_list ${library_list} jdqz_tools PARENT_SCOPE)

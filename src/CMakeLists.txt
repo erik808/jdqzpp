@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 2.8.9)
 
-enable_testing()
-
 # Lapack
 # --> For now I hardcode a few things I need on cartesius
 # --> When I find out how to detect these I will do that
@@ -87,4 +85,7 @@ endif(CCACHE_FOUND)
 
 add_subdirectory(jdqz_tools)
 add_subdirectory(jdqz)
+add_subdirectory(interfaces)
 add_subdirectory(tests)
+
+set(library_list ${library_list} PARENT_SCOPE)
