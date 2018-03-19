@@ -1,5 +1,3 @@
-#enable_testing()
-
 # Google test
 INCLUDE(ExternalProject)
 
@@ -36,33 +34,45 @@ add_dependencies(${GTEST_MAIN_LIBRARY} googletest)
 
 include_directories(${GTEST_INCLUDE_DIRS})
 
-add_executable(test_jdqz_1 test1.C)
-add_executable(test_jdqz_2 test2.C)
+set(TEST_SOURCES
+  test1
+  test2
+  )
 
-add_test(test1 test_jdqz_1)
-add_test(test2 test_jdqz_2)
+find_package(Trilinos QUIET)
+
+if (${Trilinos_FOUND})
+  list(APPEND TEST_SOURCES test_interfaces)
+
+  include_directories(${Trilinos_INCLUDE_DIRS})
+  include_directories(${Trilinos_TPL_INCLUDE_DIRS})
+
+  link_directories(${Trilinos_LIBRARY_DIRS})
+  link_directories(${Trilinos_TPL_LIBRARY_DIRS})
+endif()
+
+set(test_list)
+
+include_directories(${PROJECT_SOURCE_DIR}/src/jdqz)
+include_directories(${PROJECT_SOURCE_DIR}/src/interfaces)
+
+foreach(test_source ${TEST_SOURCES})
+  get_filename_component(test_name ${test_source} NAME)
+  add_executable(${test_name} ${test_source})
+  target_link_libraries(${test_name} jdqz_tools)
+  target_link_libraries(${test_name} ${LAPACK_LIBRARIES})
+  target_link_libraries(${test_name} ${GTEST_BOTH_LIBRARIES})
+  target_link_libraries(${test_name} ${CMAKE_THREAD_LIBS_INIT})
+
+  if (Trilinos_FOUND)
+    target_link_libraries(${test_name} ${Trilinos_LIBRARIES})
+    target_link_libraries(${test_name} ${Trilinos_TPL_LIBRARIES})
+  endif()
+
+  add_test(${test_name} ${test_name})
+  list(APPEND test_list ${test_name})
+endforeach()
 
 # Use make check to both build tests and test
-add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND}
-  DEPENDS test_jdqz_1 test_jdqz_2)
-
-target_link_libraries (test_jdqz_1 PUBLIC jdqz_tools)
-target_link_libraries (test_jdqz_2 PUBLIC jdqz_tools)
-
-target_link_libraries (test_jdqz_1 PUBLIC ${GTEST_BOTH_LIBRARIES})
-target_link_libraries (test_jdqz_2 PUBLIC ${GTEST_BOTH_LIBRARIES})
-
-target_link_libraries(test_jdqz_1 PUBLIC ${LAPACK_LIBRARIES})
-target_link_libraries(test_jdqz_2 PUBLIC ${LAPACK_LIBRARIES})
-
-# Pthread
-find_package(Threads)
-target_link_libraries (test_jdqz_1 PUBLIC ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries (test_jdqz_2 PUBLIC ${CMAKE_THREAD_LIBS_INIT})
-
-set(TEST_INCL_DIRS ../jdqz)
-
-target_include_directories(test_jdqz_1 PUBLIC ${TEST_INCL_DIRS})
-target_include_directories(test_jdqz_2 PUBLIC ${TEST_INCL_DIRS})
-
-install(TARGETS test_jdqz_1 test_jdqz_2 DESTINATION test)
+add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} --force-new-ctest-process --verbose
+  DEPENDS ${test_targets})

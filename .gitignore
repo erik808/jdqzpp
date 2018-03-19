@@ -10,6 +10,8 @@
 !doc/
 !jdqz/
 !jdqz_tools/
+!interfaces/
+!cmake/
 !tests/
 
 !*.m
