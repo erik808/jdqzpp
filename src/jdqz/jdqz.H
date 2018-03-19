@@ -3,6 +3,8 @@
 
 #include "jdqz_decl.H"
 #include "jdqz_macros.H"
+#include <ios>
+#include <fstream>
 #include <math.h>
 #include <iomanip>
 
@@ -93,14 +95,10 @@ void JDQZ<Matrix>::setup()
 {
 	// setup workspace
 	initial_.zero();
-	work_ = std::vector<Vector>(lwork_, Vector());
-	for (int i = 0; i != lwork_; ++i)
-		work_[i] = initial_;
+	work_ = std::vector<Vector>(lwork_, Vector(initial_));
 	
 	// setup solution
-	eivec_ = std::vector<Vector>(kmax_, Vector());
-	for (int i = 0; i != kmax_; ++i)
-		eivec_[i] = initial_;
+	eivec_ = std::vector<Vector>(kmax_, Vector(initial_));
 	
 	// set the indices for specific components in the workspace
 	setIndices();
@@ -112,6 +110,8 @@ void JDQZ<Matrix>::setup()
 template<typename Matrix>
 void JDQZ<Matrix>::solve()
 {
+    timerStart("jdqz solve");
+    
 	if (!initialized_)
 	{
 		WRITE( "JDQZ: ERROR! Parameters are not set, "
@@ -126,7 +126,7 @@ void JDQZ<Matrix>::solve()
 	int k         = 0;
 	int j         = 0;
 	int mxmv      = 0;
-	int ldvs      = 50;
+	int ldvs      = std::max(50, jmax_);
 	int ldzwork   = 4*ldvs;
 	int ldqkz     = ldvs;
 	int itmp      = 0;
@@ -177,14 +177,15 @@ void JDQZ<Matrix>::solve()
 	
 	while (k < kmax_ && step < maxstep_)
 	{
+        timerStart("jdqz main iteration");
+        
 		step++;
 		solvestep++;
 		if (j == 0)
 		{
 			// Initialize search and test space with random real part
-			// and zero imaginary part. Values uniform in [-1,1].
-			// TODO
-			//--> right now we use ones in the example code for comparison
+			// and zero imaginary part. Values uniform in [-1,1]. For
+			// the test vector we use ones.
 			work_[V_].random();
 		}
 		else 
@@ -243,6 +244,7 @@ void JDQZ<Matrix>::solve()
 		bool attempt = true;
 		while (attempt)
 		{
+            timerStart("jdqz attempt");
 			// --- Sort the Petrov pairs ---
 			qzsort(targeta, targetb, j, zma, zmb,
 				   vsl, vsr, ldvs, alpha, beta, order_);
@@ -288,13 +290,15 @@ void JDQZ<Matrix>::solve()
 
 			found   = (rnrm < eps_ && (j > 1 || k == kmax_ - 1));
 			attempt = found;
+
+            timerStop("jdqz attempt");
 			
 			if (verbosity_ > 4)
 				WRITE("  step = " << std::setw(3) << step << "  j = "
 					  << std::setw(3) << j << "  residual = " << rnrm);
 			
 			if (found)
-			{
+			{                
 				if (verbosity_ > 4)
 					WRITE("\n-- found eigenvalue: k = " << k << '\n'
 						  << "       alpha = " << zalpha << '\n'
@@ -311,6 +315,9 @@ void JDQZ<Matrix>::solve()
 				solvestep = 0;
 				
 				if (k == kmax_) break; // break from this while loop
+
+                timerStart("jdqz next ev");
+
 				
 				gemm(n_, j-1, j, 1.0, V_, &vsr(0,1), ldvs, 0.0, Aux_);
 				
@@ -356,9 +363,12 @@ void JDQZ<Matrix>::solve()
 				ok = true;
 				mxmv = 0;
 				deps = 1.0;
+                
+                timerStop("jdqz next ev");
 			}
 			else if (j == jmax_)
 			{
+                timerStart("jdqz reduce j");
 				gemm(n_, jmin_, j, 1.0, V_, &vsr[0], ldvs, 0.0, Aux_);
 				itmp  = V_;
 				V_    = Aux_;
@@ -386,8 +396,10 @@ void JDQZ<Matrix>::solve()
 				
 				zlaset_("A", &j, &j, &zzero, &zone, &vsr[0], &ldvs);
 				zlaset_("A", &j, &j, &zzero, &zone, &vsl[0], &ldvs);
+                timerStop("jdqz reduce j");
 			}
 		}
+        timerStop("jdqz main iteration");
 	}
 	
 	// --- Did enough eigenpairs converge? ---
@@ -441,6 +453,8 @@ void JDQZ<Matrix>::solve()
 	}
 	alpha_ = alpha;
 	beta_  = beta;
+
+    timerStop("jdqz solve");
 }
 	
 //==================================================================
@@ -449,6 +463,7 @@ void JDQZ<Matrix>::makeqkz(int n, int k, int Q, int Kq, Complex2D &qkz,
 						   Complex2D &invqkz, int ldqkz,
 						   std::vector<int> &ipiv)
 {
+    timerStart("jdqz makeqkz");
 	for (int i = 0; i != k; ++i)
 		for (int j = 0; j != k; ++j)
 		{
@@ -461,6 +476,7 @@ void JDQZ<Matrix>::makeqkz(int n, int k, int Q, int Kq, Complex2D &qkz,
 
 	int info = 0;
 	zgetrf_(&k, &k, &invqkz[0], &ldqkz, &ipiv[0], &info);
+    timerStop("jdqz makeqkz");
 }
 
 //==================================================================
@@ -469,9 +485,13 @@ template<typename Matrix>
 void JDQZ<Matrix>::gemv(int m, int n, complex alpha, int A,
 						complex *X, complex beta, int Y)
 {
+    timerStart("jdqz gemv");
+    
 	work_[Y].scale(beta);
 	for (int i = 0; i != n; ++i)
 		work_[Y].axpy(alpha * X[i], work_[A+i]);
+    
+    timerStop("jdqz gemv");
 }
 
 //==================================================================
@@ -480,9 +500,11 @@ template<typename Matrix>
 void JDQZ<Matrix>::gemv(int m, int n, complex alpha, int A,
 						int X, complex beta, Complex1D &Y)
 {
+    timerStart("jdqz gemv");
 	Y.scale(beta);
 	for (int i = 0; i != n; ++i)
 		Y[i] += alpha * work_[A+i].dot(work_[X]);
+    timerStop("jdqz gemv");
 }
 
 //==================================================================
@@ -491,11 +513,13 @@ template<typename Matrix>
 void JDQZ<Matrix>::gemv(int m, int n, complex alpha, int A,
 						int X, complex beta, complex *Y)
 {
+    timerStart("jdqz gemv");
 	for (int i = 0; i != n; ++i)
 	{
 		Y[i] *= beta;
 		Y[i] += alpha * work_[A+i].dot(work_[X]);
 	}
+    timerStop("jdqz gemv");
 }
 
 //==================================================================
@@ -504,12 +528,14 @@ template<typename Matrix>
 void JDQZ<Matrix>::gemm(int m, int n, int k, complex alpha, int A,
 						complex *B, int ldb, complex beta, int C)
 {
+    timerStart("jdqz gemm");
 	for (int j = 0; j != n; ++j)
 	{
 		work_[C+j].scale(beta);
 		for (int i = 0; i != k; ++i)			
 			work_[C+j].axpy(alpha * B[i+ldb*j], work_[A+i]);
 	}
+    timerStop("jdqz gemm");
 }
 
 //==================================================================
@@ -519,6 +545,7 @@ void JDQZ<Matrix>::gemm(int m, int n, int k, complex alpha, int A,
 						complex *B, int ldb, complex beta,
 						std::vector<Vector> &C)
 {
+    timerStart("jdqz gemm");
 	assert((int) C.size() >= n);
 	for (int j = 0; j != n; ++j)
 	{
@@ -526,6 +553,7 @@ void JDQZ<Matrix>::gemm(int m, int n, int k, complex alpha, int A,
 		for (int i = 0; i != k; ++i)
 			C[j].axpy(alpha * B[i+ldb*j], work_[A+i]);
 	}
+    timerStop("jdqz gemm");
 }
 
 //==================================================================
@@ -535,6 +563,8 @@ void JDQZ<Matrix>::qzsort(complex ta, complex tb, int k,
 						  Complex2D &q, int ldz, Complex1D &alpha,
 						  Complex1D &beta, int order)
 {
+    timerStart("jdqz qzsort");
+    
 	// In this interface we should be careful
 	// with 1 and 0 based calls...
 	int j = 0;
@@ -550,6 +580,8 @@ void JDQZ<Matrix>::qzsort(complex ta, complex tb, int k,
 		j = select_(&N, &ta, &tb, &alpha[i-1], &beta[i-1], &order) + i-1;		
 		myexc_(&k, &s[0], &t[0], &z[0], &q[0], &ldz, &j, &i);		
 	}
+    
+    timerStop("jdqz qzsort");
 }
 
 //==================================================================
@@ -559,13 +591,13 @@ void JDQZ<Matrix>::gmres(int n, int x, int r, int mxm, double &eps, int &mxmv,
 						 Complex2D &invqkz, int ldqkz, std::vector<int> &ipiv,
 						 Complex1D &f, int v, int tp)
 {
-	// -- some initializations --- 
-	int maxm = 100;
+	// -- some initializations ---
+    timerStart("jdqz gmres");
+    
+	int maxm = std::max(100, mxm + 1);
 	int nmv  = 0;
 	int m, m1;
 	int one  = 1;
-	
-	assert(mxm < maxm);
 	
 	complex ztmp, zdotc;
 	complex rcs(0,0);
@@ -649,6 +681,8 @@ void JDQZ<Matrix>::gmres(int n, int x, int r, int mxm, double &eps, int &mxmv,
 	// --- return ---
 	eps  = rnrm / rnrm0;
 	mxmv = nmv;
+
+    timerStop("jdqz gmres");
 }
 
 //==================================================================
@@ -657,6 +691,7 @@ void JDQZ<Matrix>::psolve(int n, int x, int nq, int q, int kz,
 						  Complex2D &invqkz, int ldqkz,
 						  std::vector<int> ipiv, Complex1D &f)
 {
+    timerStart("jdqz psolve");
 	mat_.PRECON(work_[x]);
 
 	gemv(n, nq, 1.0, q, x, 0.0, f);
@@ -667,12 +702,15 @@ void JDQZ<Matrix>::psolve(int n, int x, int nq, int q, int kz,
 			&ipiv[0], &f[0], &ldqkz, &info);
 
 	gemv(n, nq, -1.0, kz, &f[0], 1.0, x);
+    timerStop("jdqz psolve");
 }
 
 //==================================================================
 template<typename Matrix>
 void JDQZ<Matrix>::mgs(int n, int k, int v, int w, int job)
 {
+    timerStart("jdqz mgs");
+    
 	double s1 = work_[w].norm();
 	double s0;
 	std::complex<double> nrm;
@@ -686,6 +724,8 @@ void JDQZ<Matrix>::mgs(int n, int k, int v, int w, int job)
 		nrm = 1.0 / s1;
 		work_[w].scale(nrm);
 	}
+    
+    timerStop("jdqz mgs");
 }
 
 //==================================================================
@@ -694,6 +734,8 @@ void JDQZ<Matrix>::ortho(int n, int v, int w,
 						 double &s0, double &s1,
 						 std::complex<double> &nrm)
 {
+    timerStart("jdqz ortho");
+    
 	nrm = work_[v].dot(work_[w]);
 	work_[w].axpy(-nrm, work_[v]);
 	s1 = work_[w].norm();
@@ -712,7 +754,8 @@ void JDQZ<Matrix>::ortho(int n, int v, int w,
 		if (s1 < s0 / kappa  && verbosity_ > 0)
 			WRITE("WARNING: zero vector in mgs...")
 	}
-	return; 
+    
+    timerStop("jdqz ortho");
 }
 
 //==================================================================
@@ -721,10 +764,14 @@ void JDQZ<Matrix>::jdqzmv(int x, int y, int tmp,
 						  std::complex<double> alpha,
 						  std::complex<double> beta)
 {
+    timerStart("jdqz jdqzmv");
+    
 	// y = beta * A * x - alpha * B * x
 	mat_.AMUL(work_[x], work_[tmp]);
 	mat_.BMUL(work_[x], work_[y]);
 	work_[y].axpby(beta, work_[tmp], -alpha);
+
+    timerStop("jdqz jdqzmv");
 }
 
 //==================================================================
@@ -732,6 +779,8 @@ template<typename Matrix>
 void JDQZ<Matrix>::makemm(int n, int k, int w, int v,
 						  Complex2D &m, Complex2D &zm, int ldm)
 {
+    timerStart("jdqz makemm");
+    
 	for (int i = 0; i <= k-1; ++i)
 		for (int j = 0; j <= k-1; ++j)
 		{
@@ -742,6 +791,8 @@ void JDQZ<Matrix>::makemm(int n, int k, int w, int v,
 			assert(std::isnan(zm(i,j).real()) == false);
 			assert(std::isnan(zm(i,j).imag()) == false);
 		}
+    
+    timerStop("jdqz makemm");
 }
 
 //==================================================================
@@ -751,6 +802,8 @@ void JDQZ<Matrix>::gegs(int N, Complex2D &A, Complex2D &B,
 						Complex2D &VSL, Complex2D &VSR,
 						Complex1D &work, std::vector<double> &rwork)
 {
+    timerStart("jdqz gegs");
+    
 	int  LDA   = A.rows();
 	int  LDB   = B.rows();
 	int  LDVSL = VSL.rows();
@@ -773,6 +826,8 @@ void JDQZ<Matrix>::gegs(int N, Complex2D &A, Complex2D &B,
 		   &work[0], &LWORK, &rwork[0], &INFO);
 
 	assert(INFO == 0);
+
+    timerStop("jdqz gegs");
 }
 
 //==================================================================
@@ -802,6 +857,43 @@ void JDQZ<Matrix>::setIndices()
 
 //==================================================================
 template<typename Matrix>
+void JDQZ<Matrix>::timerStart(std::string const &msg)
+{
+    if (!profile_) return;
+    
+    JDQZTimer timer(msg);
+    timer.resetStartTime();
+    if (profileData_.find(msg) == profileData_.end())
+        profileData_[msg] = std::array<double, PROFILE_ENTRIES>();
+    timerStack_.push(timer);
+}
+
+//==================================================================
+template<typename Matrix>
+void JDQZ<Matrix>::timerStop(std::string const &msg)
+{
+    if (!profile_) return;
+
+    double time = timerStack_.top().elapsedTime();
+
+    bool sane = true;;
+    if (!(msg == timerStack_.top().label()))
+    {
+        WRITE("Warning: msg and label not equal!");
+        WRITE("   msg = " << msg);
+        WRITE(" label = " << timerStack_.top().label());
+        sane = false;
+    }
+    assert(sane);
+           
+    timerStack_.pop();
+    profileData_[msg][0] += time;
+    profileData_[msg][1] += 1;
+    profileData_[msg][2] = profileData_[msg][0] / profileData_[msg][1];
+}
+
+//==================================================================
+template<typename Matrix>
 template<typename PList>
 void JDQZ<Matrix>::setParameters(PList &params)
 {
@@ -826,6 +918,7 @@ void JDQZ<Matrix>::setParameters(PList &params)
 	testspace_ = params.get("Testspace expansion", 3); 
 	wanted_    = params.get("Compute converged eigenvectors", true);
 	verbosity_ = params.get("Verbosity", 1);
+    profile_   = params.get("Profile", false);
 	
 	if (method_ == 1)
 		lwork_ =  4 +  m_  + 5*jmax_ + 3*kmax_;
@@ -857,6 +950,76 @@ void JDQZ<Matrix>::printParameters()
 	WRITE(" | testspace_ " << testspace_ );
 	WRITE(" | wanted_    " << wanted_ );
 	WRITE(" | lwork_     " << lwork_ << '\n' );	
+}
+
+//==================================================================
+template<typename Matrix>
+void JDQZ<Matrix>::printProfile(std::string const &filename)
+{
+    if (!profile_) return;
+
+    // check if timerstack is sane
+    bool sane = true;
+    while (!timerStack_.empty())
+    {
+        WRITE("Warning: timerStack_ not empty!");
+        timerStack_.top().printLabel();
+        timerStack_.pop();
+        sane = false;           
+    }
+    assert(sane);
+
+    
+    // setting up a filename
+    std::ostringstream profilefile(filename);
+    // setup output file
+    std::ofstream file(profilefile.str().c_str());     
+
+    // Set format flags
+    file << std::left;
+
+    // Define line format
+#ifndef LINE
+# define LINE(s1, s2, s3, s4, s5, s6, s7, s8, s9)               \
+    {                                                           \
+        int sp = 3;  int it = 5;  int id = 5;                   \
+        int db = 12; int st = 45;                               \
+        file << std::setw(id) << s1     << std::setw(sp) << s2  \
+             << std::setw(st) << s3 << std::setw(sp) << s4      \
+             << std::setw(db) << s5     << std::setw(sp) << s6  \
+             << std::setw(it) << s7     << std::setw(sp) << s8  \
+             << std::setw(db) << s9     << std::endl;           \
+    }
+#endif
+
+    // Header
+    LINE("", "", "", "", "cumul.", "", "calls", "", "average");
+
+    // Display timings of the separate models, summing
+    int counter = 0;
+    for (auto const &map : profileData_)
+        if (map.first.compare(0,8,"_NOTIME_") != 0)
+        {
+            counter++;
+            std::stringstream s;
+            s << " (" << counter << ")";
+            LINE(s.str(), "", map.first, ":", map.second[0], "",
+                 map.second[1], "", map.second[2]);
+        }
+
+    // Newline
+    file << std::endl;
+
+    // Display iteration information
+    for (auto const &map : profileData_)
+        if (map.first.compare(0,8,"_NOTIME_") == 0 )
+        {
+            counter++;
+            std::stringstream s;
+            s << " (" << counter << ")";
+            LINE(s.str(), "", map.first.substr(8), ":", map.second[0], "",
+                 map.second[1], "", map.second[2]);
+        }
 }
   
 #endif

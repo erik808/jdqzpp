@@ -16,4 +16,9 @@
 # endif
 #endif
 
+// Number of entries in profile
+#ifndef PROFILE_ENTRIES
+# define PROFILE_ENTRIES 4
+#endif
+
 #endif

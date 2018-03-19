@@ -31,7 +31,7 @@ if (NOT GTEST_FOUND)
   find_package(GTest)
 endif ()
 
-include_directories   (${GTEST_INCLUDE_DIRS})
+include_directories(${GTEST_INCLUDE_DIRS})
 
 target_link_libraries (test_jdqz_1 PUBLIC ${GTEST_LIBRARIES})
 target_link_libraries (test_jdqz_2 PUBLIC ${GTEST_LIBRARIES})
