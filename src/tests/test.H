@@ -38,6 +38,8 @@ public:
 			return sqrt(sum);
 		}
 
+	int length() { return size(); }
+
 	std::complex<double> dot(TestVector const &other)
 		{
 			assert(this->size() == other.size());
@@ -132,7 +134,6 @@ public:
 			for (size_t i = 1; i <= n_; ++i)
 				q[i-1] = ((double) i) * q[i-1] / ((double) i*i - 31);
 		}
-	size_t size() { return n_; }
 };
 
 //------------------------------------------------------------------
@@ -171,8 +172,6 @@ public:
 		{
 			// Do nothing
 		}
-
-	size_t size() { return n_; }
 };
 
 //------------------------------------------------------------------

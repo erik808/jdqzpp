@@ -74,6 +74,7 @@ template<typename Matrix>
 JDQZ<Matrix>::
 JDQZ(Matrix &matrix, Vector &initial)
 	:
+	n_(initial.length()),
 	mat_(matrix),
 	initial_(initial),
 	initialized_(false)
@@ -897,9 +898,6 @@ template<typename Matrix>
 template<typename PList>
 void JDQZ<Matrix>::setParameters(PList &params)
 {
-	n_ = params.get("Problem size", (int) mat_.size());
-	assert(n_ == (int) mat_.size());
-	
 	double shiftRe = params.get("Shift (real part)", 0.0);
 	double shiftIm = params.get("Shift (imaginary part)", 0.0);
 	shift_     = std::complex<double>(shiftRe, shiftIm);

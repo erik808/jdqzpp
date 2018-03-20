@@ -61,21 +61,16 @@ private:
         Teuchos::RCP<const OP> B_;
         Teuchos::RCP<const PREC> M_;
 
-        size_t n_;
-
     public:
         //! constructor
         JdqzppOperator(const Teuchos::RCP<Eigenproblem<ScalarType,MV,OP> > &problem,
                        const Teuchos::RCP<PREC> &prec)
             :
-            M_(prec),
-            n_(MVT::GetGlobalLength(*problem->getInitVec()))
+            M_(prec)
             {
                 A_ = problem->getA();
                 if (A_ == Teuchos::null)
-                {
                     A_ = problem->getOperator();
-                }
                 B_ = problem->getM();
                 TEUCHOS_TEST_FOR_EXCEPTION(A_ == Teuchos::null || B_ == Teuchos::null,
                                            std::invalid_argument,
@@ -104,8 +99,6 @@ private:
                 M_->ApplyInverse(q.imag(), tmp.imag());
                 q = tmp;
             }
-
-        size_t size() { return n_; }
     };
 
 public:
