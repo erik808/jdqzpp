@@ -110,7 +110,7 @@ public:
      * for the solver.
      * The following options control the behavior
      * of the solver:
-     * - "Which" -- a string specifying the desired eigenvalues: SR, LR, SI, or LI. Default: "target"
+     * - "Which" -- a string specifying the desired eigenvalues: TG, SR, LR, SI, or LI. Default: "TG"
      * - "Maximum Subspace Dimension" -- maximum number of basis vectors for subspace.  Two
      *  (for standard eigenvalue problems) or three (for generalized eigenvalue problems) sets of basis
      *  vectors of this size will be required. Default: 3*problem->getNEV()*"Block Size"
@@ -264,13 +264,14 @@ JdqzppSolMgr<ScalarType,MV,OP,PREC>::JdqzppSolMgr(
     }
 
     // Get sort type
-    std::string which;
     if(pl.isType<std::string>("Which"))
     {
-        which = pl.get<std::string>("Which");
-        TEUCHOS_TEST_FOR_EXCEPTION(which!="LI" && which!="SI" && which!="LR" && which!="SR",
+        std::string which = pl.get<std::string>("Which");
+        TEUCHOS_TEST_FOR_EXCEPTION(which!="LI" && which!="SI" &&
+                                   which!="LR" && which!="SR" &&
+                                   which!="TG",
                                    std::invalid_argument,
-                                   "Which must be one of LI, SI, LR, SR.");
+                                   "Which must be one of TG, LI, SI, LR, SR.");
         if (which == "LI")
             params->set("Criterion for Ritz values", 2);
         else if (which == "SI")
@@ -279,7 +280,12 @@ JdqzppSolMgr<ScalarType,MV,OP,PREC>::JdqzppSolMgr(
             params->set("Criterion for Ritz values", 1);
         else if (which == "SR")
             params->set("Criterion for Ritz values", -1);
+        else if (which == "TG")
+            params->set("Criterion for Ritz values", 0);
     }
+
+    double shift = pl.get<double>("Shift", 0.0);
+    params->set("Shift (real part)", shift);
 
     ComplexVectorType initVec(*d_problem->getInitVec());
     d_solver = Teuchos::rcp(new JDQZ<JdqzppOperator>(*d_operator, initVec));
