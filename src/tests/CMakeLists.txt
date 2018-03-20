@@ -51,8 +51,8 @@ endif()
 
 set(test_list)
 
-include_directories(${PROJECT_SOURCE_DIR}/src/jdqz)
-include_directories(${PROJECT_SOURCE_DIR}/src/interfaces)
+include_directories(BEFORE ${PROJECT_SOURCE_DIR}/src/jdqz)
+include_directories(BEFORE ${PROJECT_SOURCE_DIR}/src/interfaces)
 
 foreach(test_source ${TEST_SOURCES})
   get_filename_component(test_name ${test_source} NAME)
