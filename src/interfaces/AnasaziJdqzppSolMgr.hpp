@@ -110,7 +110,7 @@ public:
      * for the solver.
      * The following options control the behavior
      * of the solver:
-     * - "Which" -- a string specifying the desired eigenvalues: TG, SR, LR, SI, or LI. Default: "TG"
+     * - "Which" -- a string specifying the desired eigenvalues: TG, SM, SR, LR, SI, or LI. Default: "SM"
      * - "Maximum Subspace Dimension" -- maximum number of basis vectors for subspace.  Two
      *  (for standard eigenvalue problems) or three (for generalized eigenvalue problems) sets of basis
      *  vectors of this size will be required. Default: 3*problem->getNEV()*"Block Size"
@@ -269,9 +269,9 @@ JdqzppSolMgr<ScalarType,MV,OP,PREC>::JdqzppSolMgr(
         std::string which = pl.get<std::string>("Which");
         TEUCHOS_TEST_FOR_EXCEPTION(which!="LI" && which!="SI" &&
                                    which!="LR" && which!="SR" &&
-                                   which!="TG",
+                                   which!="TG" && which!="SM",
                                    std::invalid_argument,
-                                   "Which must be one of TG, LI, SI, LR, SR.");
+                                   "Which must be one of TG, SM, LI, SI, LR, SR.");
         if (which == "LI")
             params->set("Criterion for Ritz values", 2);
         else if (which == "SI")
@@ -281,6 +281,8 @@ JdqzppSolMgr<ScalarType,MV,OP,PREC>::JdqzppSolMgr(
         else if (which == "SR")
             params->set("Criterion for Ritz values", -1);
         else if (which == "TG")
+            params->set("Criterion for Ritz values", 0);
+        else if (which == "SM")
             params->set("Criterion for Ritz values", 0);
     }
 
