@@ -1,4 +1,5 @@
 # Google test
+
 INCLUDE(ExternalProject)
 
 SET_DIRECTORY_PROPERTIES(PROPERTIES EP_PREFIX ${CMAKE_BINARY_DIR}/third_party)
@@ -22,12 +23,20 @@ set(GTEST_LIBRARY gtest)
 set(GTEST_MAIN_LIBRARY gtest_main)
 set(GTEST_BOTH_LIBRARIES gtest gtest_main)
 
-add_library(${GTEST_LIBRARY} UNKNOWN IMPORTED)
+if (Gtest_PACKAGE_LIST)
+  message("** Trilinos has already set ${Gtest_PACKAGE_LIST} library")
+else ()  
+  add_library(${GTEST_LIBRARY} UNKNOWN IMPORTED)
+endif (Gtest_PACKAGE_LIST)
+
+
 set_property(TARGET ${GTEST_LIBRARY} PROPERTY IMPORTED_LOCATION
   ${GTEST_LIBRARY_PATH})
+
 add_dependencies(${GTEST_LIBRARY} googletest)
 
 add_library(${GTEST_MAIN_LIBRARY} UNKNOWN IMPORTED)
+
 set_property(TARGET ${GTEST_MAIN_LIBRARY} PROPERTY IMPORTED_LOCATION
   ${GTEST_MAIN_LIBRARY_PATH})
 add_dependencies(${GTEST_MAIN_LIBRARY} googletest)
