@@ -211,7 +211,7 @@ JdqzppSolMgr<ScalarType,MV,OP,PREC>::JdqzppSolMgr(
                                std::invalid_argument,
                                "Number of requested eigenvalues must be positive.");
 
-    Teuchos::RCP<Teuchos::ParameterList> params = Teuchos::rcp(new Teuchos::ParameterList());
+    Teuchos::RCP<Teuchos::ParameterList> params = Teuchos::rcp(new Teuchos::ParameterList(pl));
 
     tol_ = pl.get<MagnitudeType>("Convergence Tolerance", MT::eps());
     TEUCHOS_TEST_FOR_EXCEPTION(tol_ <= MT::zero(),
