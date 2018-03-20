@@ -6,26 +6,20 @@ cmake_minimum_required(VERSION 2.8.9)
 if ($ENV{PLAT} MATCHES "cartesius") 
   message("-- Get info from Trilinos")
 
-  # Trying to find Trilinos
-  if (DEFINED ENV{TRILINOS_DIR})
-	set(Trilinos_DIR $ENV{TRILINOS_DIR}/lib/cmake/Trilinos)
-	message("-- Trilinos directory: " ${Trilinos_DIR})
-  endif ()
-  
-  find_package(Trilinos)
+  find_package(Anasazi)
 
-  if (NOT Trilinos_FOUND)
-	message(FATAL_ERROR " Trilinos root directory should be in PATH or TRILINOS_DIR.")
+  if (NOT Anasazi_FOUND)
+	message(FATAL_ERROR " PATH should contain Trilinos_DIR/bin ")
   endif ()
   
   if (NOT DEFINED ${CMAKE_CXX_COMPILER})
-	set(CMAKE_CXX_COMPILER ${Trilinos_CXX_COMPILER})
+	set(CMAKE_CXX_COMPILER ${Anasazi_CXX_COMPILER})
   endif ()
 
   message("-- CXX compiler: ${CMAKE_CXX_COMPILER}")
   
   if (NOT DEFINED ${CMAKE_Fortran_COMPILER})
-	set(CMAKE_Fortran_COMPILER ${Trilinos_Fortran_COMPILER})
+	set(CMAKE_Fortran_COMPILER ${Anasazi_Fortran_COMPILER})
   endif ()
 
   message("-- Fortran compiler: ${CMAKE_Fortran_COMPILER}")
