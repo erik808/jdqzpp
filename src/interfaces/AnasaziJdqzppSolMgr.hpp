@@ -211,7 +211,7 @@ JdqzppSolMgr<ScalarType,MV,OP,PREC>::JdqzppSolMgr(
                                std::invalid_argument,
                                "Number of requested eigenvalues must be positive.");
 
-    Teuchos::RCP<Teuchos::ParameterList> params = Teuchos::rcp(new Teuchos::ParameterList(pl));
+    Teuchos::RCP<Teuchos::ParameterList> params = Teuchos::rcp(new Teuchos::ParameterList());
 
     tol_ = pl.get<MagnitudeType>("Convergence Tolerance", MT::eps());
     TEUCHOS_TEST_FOR_EXCEPTION(tol_ <= MT::zero(),
@@ -289,9 +289,13 @@ JdqzppSolMgr<ScalarType,MV,OP,PREC>::JdqzppSolMgr(
     double shift = pl.get<double>("Shift", 0.0);
     params->set("Shift (real part)", shift);
 
+    Teuchos::RCP<Teuchos::ParameterList> combined_params =
+        Teuchos::rcp(new Teuchos::ParameterList(pl));
+    combined_params->setParametersNotAlreadySet(*params);
+
     ComplexVectorType initVec(*d_problem->getInitVec());
     d_solver = Teuchos::rcp(new JDQZ<JdqzppOperator>(*d_operator, initVec));
-    d_solver->setParameters(*params);
+    d_solver->setParameters(*combined_params);
 }
 
 template <class ScalarType, class MV, class OP, class PREC>
