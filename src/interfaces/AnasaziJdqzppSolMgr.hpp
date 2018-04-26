@@ -211,14 +211,20 @@ JdqzppSolMgr<ScalarType,MV,OP,PREC>::JdqzppSolMgr(
                                std::invalid_argument,
                                "Number of requested eigenvalues must be positive.");
 
-    Teuchos::RCP<Teuchos::ParameterList> params = Teuchos::rcp(new Teuchos::ParameterList());
+    Teuchos::RCP<Teuchos::ParameterList> params =
+        Teuchos::rcp(new Teuchos::ParameterList());
+    Teuchos::RCP<Teuchos::ParameterList> combined_params =
+        Teuchos::rcp(new Teuchos::ParameterList(pl));
 
-    tol_ = pl.get<MagnitudeType>("Convergence Tolerance", MT::eps());
+    tol_ = pl.get<MagnitudeType>("Tolerance", MT::eps());
+    tol_ = pl.get<MagnitudeType>("Convergence Tolerance", tol_);
     TEUCHOS_TEST_FOR_EXCEPTION(tol_ <= MT::zero(),
                                std::invalid_argument,
                                "Convergence Tolerance must be greater than zero.");
 
     params->set("Tolerance", tol_);
+    combined_params->setParametersNotAlreadySet(*params);
+    tol_ = combined_params->get<MagnitudeType>("Tolerance");
 
     if (pl.isType<Anasazi::MsgType>("Verbosity"))
     {
@@ -241,6 +247,9 @@ JdqzppSolMgr<ScalarType,MV,OP,PREC>::JdqzppSolMgr(
 
     int nev = d_problem->getNEV();
     params->set("Number of eigenvalues", nev);
+
+    combined_params->setParametersNotAlreadySet(*params);
+    nev = combined_params->get<int>("Number of eigenvalues");
 
     int max_dim = pl.get<int>("Maximum Subspace Dimension", 3 * nev);
     params->set("Max size search space", max_dim);
@@ -289,8 +298,6 @@ JdqzppSolMgr<ScalarType,MV,OP,PREC>::JdqzppSolMgr(
     double shift = pl.get<double>("Shift", 0.0);
     params->set("Shift (real part)", shift);
 
-    Teuchos::RCP<Teuchos::ParameterList> combined_params =
-        Teuchos::rcp(new Teuchos::ParameterList(pl));
     combined_params->setParametersNotAlreadySet(*params);
 
     ComplexVectorType initVec(*d_problem->getInitVec());
