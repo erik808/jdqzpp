@@ -215,5 +215,5 @@ TEST(JDQZ, ReuseBasis)
 	jdqz.solve();
 
 	EXPECT_EQ(jdqz.kmax(), 5);
-	EXPECT_EQ(jdqz.iterations(), 1);
+	EXPECT_LT(jdqz.iterations(), 7);
 }

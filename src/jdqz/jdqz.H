@@ -188,6 +188,16 @@ void JDQZ<Matrix>::solve()
         if (j_ == 0 && reuseBasis_ && jprev > 0)
         {
             j_ = jprev - 1;
+            for (int i = 0; i < j_; i++)
+            {
+                mat_.AMUL(work_[V_+i], work_[Av_+i]);
+                mat_.BMUL(work_[V_+i], work_[Bv_+i]);
+
+                makemm(n_, i+1, W_, Av_, ma, zma, ldvs);
+                makemm(n_, i+1, W_, Bv_, mb, zmb, ldvs);
+
+                gegs(i+1, zma, zmb, alpha, beta, vsl, vsr, zwork, rwork);
+            }
         }
 		else if (j_ == 0)
 		{
