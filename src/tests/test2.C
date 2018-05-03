@@ -48,6 +48,7 @@ TEST(JDQZ, Results)
 	std::cout << jdqz.kmax() << " converged eigenvalues\n\n";
 
 	EXPECT_EQ(jdqz.kmax(), 5);
+	EXPECT_LT(jdqz.iterations(), 120);
 	
 	for (int j = 0; j != jdqz.kmax(); ++j)
 	{

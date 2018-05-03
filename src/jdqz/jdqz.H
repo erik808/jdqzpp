@@ -75,6 +75,8 @@ JDQZ<Matrix>::
 JDQZ(Matrix &matrix, Vector &initial)
 	:
 	n_(initial.length()),
+    j_(0),
+    k_(0),
 	mat_(matrix),
 	initial_(initial),
 	initialized_(false)
@@ -122,19 +124,20 @@ void JDQZ<Matrix>::solve()
 	
 	//-------------------------------------------------------
 	// some initializations
-	int step      = 0;
-	int solvestep = 0;
-	int k         = 0;
-	int j         = 0;
-	int mxmv      = 0;
-	int ldvs      = std::max(50, jmax_);
-	int ldzwork   = 4*ldvs;
-	int ldqkz     = ldvs;
-	int itmp      = 0;
-	int one       = 1;
+    iterations_         = 0;
+	int solveIterations = 0;
+    int jprev           = j_;
+	j_                  = 0;
+    k_                  = 0;
+	int mxmv            = 0;
+	int ldvs            = std::max(50, jmax_);
+	int ldzwork         = 4*ldvs;
+	int ldqkz           = ldvs;
+	int itmp            = 0;
+	int one             = 1;
 
-	double deps   = 1.0;
-	double rnrm   = 0.0;
+	double deps         = 1.0;
+	double rnrm         = 0.0;
 
 	complex zzero(0,0);
 	complex zone(1,0);
@@ -175,34 +178,38 @@ void JDQZ<Matrix>::solve()
 	// a few flags...
 	bool ok    = true;
 	bool found = false;
-	
-	while (k < kmax_ && step < maxstep_)
+
+	while (k_ < kmax_ && iterations_ < maxIterations_)
 	{
         timerStart("jdqz main iteration");
         
-		step++;
-		solvestep++;
-		if (j == 0)
+		iterations_++;
+		solveIterations++;
+        if (j_ == 0 && reuseBasis_ && jprev > 0)
+        {
+            j_ = jprev - 1;
+        }
+		else if (j_ == 0)
 		{
 			// Initialize search and test space with random real part
 			// and zero imaginary part. Values uniform in [-1,1]. For
 			// the test vector we use ones.
 			work_[V_].random();
 		}
-		else 
+		else
 		{
 			mxmv = maxnmv_;
-			deps = pow(2.0, -solvestep);
-			if (j < jmin_)
+			deps = pow(2.0, -solveIterations);
+			if (j_ < jmin_)
 			{
 				mxmv = 1;
-				gmres(n_, V_+j, D_, m_, deps, mxmv, zalpha, zbeta, k+1,
+				gmres(n_, V_+j_, D_, m_, deps, mxmv, zalpha, zbeta, k_+1,
 					  Kz_, Q_, invqkz, ldqkz, ipivqkz, f, U_, Tp_);
 			}
 			else if (method_ == GMRES)
 			{
 				mxmv = m_;
-				gmres(n_, V_+j, D_, m_, deps, mxmv, zalpha, zbeta, k+1,
+				gmres(n_, V_+j_, D_, m_, deps, mxmv, zalpha, zbeta, k_+1,
 					  Kz_, Q_, invqkz, ldqkz, ipivqkz, f, U_, Tp_);
 			}
  			else if (method_ == CGSTAB)
@@ -210,44 +217,44 @@ void JDQZ<Matrix>::solve()
 				// TODO
 			}
 		}
-		j++;
+		j_++;
 
-		mgs(n_, j-1, V_, V_+j-1, 1);
-		mgs(n_, k,   Q_, V_+j-1, 1);
+		mgs(n_, j_-1, V_, V_+j_-1, 1);
+		mgs(n_, k_,   Q_, V_+j_-1, 1);
 		
 		if (testspace_ == 1)      // Standard Petrov
 		{
-			jdqzmv(V_+j-1, W_+j-1, Tp_,
+			jdqzmv(V_+j_-1, W_+j_-1, Tp_,
 				   -std::conj(shiftb), std::conj(shifta));
 		}
 		else if (testspace_ == 2) // Standard 'variable' Petrov
 		{
-			jdqzmv(V_+j-1, W_+j-1, Tp_,
+			jdqzmv(V_+j_-1, W_+j_-1, Tp_,
 				   -std::conj(zbeta), std::conj(zalpha));
 		}
 		else if (testspace_ == 3) // Harmonic Petrov
 		{
-			jdqzmv(V_+j-1, W_+j-1, Tp_,
+			jdqzmv(V_+j_-1, W_+j_-1, Tp_,
 				   shifta, shiftb);
 		}
 
-		mgs(n_, j-1, W_, W_+j-1, 1);
-		mgs(n_, k  , Z_, W_+j-1, 1);
+		mgs(n_, j_-1, W_, W_+j_-1, 1);
+		mgs(n_, k_,   Z_, W_+j_-1, 1);
 		
-		mat_.AMUL(work_[V_+j-1], work_[Av_+j-1]);
-		mat_.BMUL(work_[V_+j-1], work_[Bv_+j-1]);
+		mat_.AMUL(work_[V_+j_-1], work_[Av_+j_-1]);
+		mat_.BMUL(work_[V_+j_-1], work_[Bv_+j_-1]);
 		
-		makemm(n_, j, W_, Av_, ma, zma, ldvs);
-		makemm(n_, j, W_, Bv_, mb, zmb, ldvs);
+		makemm(n_, j_, W_, Av_, ma, zma, ldvs);
+		makemm(n_, j_, W_, Bv_, mb, zmb, ldvs);
 		
-		gegs(j, zma, zmb, alpha, beta, vsl, vsr, zwork, rwork);
+		gegs(j_, zma, zmb, alpha, beta, vsl, vsr, zwork, rwork);
 		
 		bool attempt = true;
 		while (attempt)
 		{
             timerStart("jdqz attempt");
 			// --- Sort the Petrov pairs ---
-			qzsort(targeta, targetb, j, zma, zmb,
+			qzsort(targeta, targetb, j_, zma, zmb,
 				   vsl, vsr, ldvs, alpha, beta, order_);
 
 			zalpha = zma(0,0);
@@ -257,28 +264,28 @@ void JDQZ<Matrix>::solve()
 
 			// --- compute new q ---
 			// Q(:,k) = V_ * VSR(:,0)
-			gemv(n_, j, 1.0, V_, &vsr(0,0), 0.0, Q_+k);
+			gemv(n_, j_, 1.0, V_, &vsr(0,0), 0.0, Q_+k_);
 
 			// --- orthogonalize new q ---
-			mgs(n_, k, Q_, Q_+k, 1);
+			mgs(n_, k_, Q_, Q_+k_, 1);
 
 			// --- compute new z ---
 			// Z(:,k) = W_ * VSL(:,0)
-			gemv(n_, j, 1.0, W_, &vsl(0,0), 0.0, Z_+k);
+			gemv(n_, j_, 1.0, W_, &vsl(0,0), 0.0, Z_+k_);
 
 			// --- orthogonalize new z ---
-			mgs(n_, k, Z_, Z_+k, 1);
+			mgs(n_, k_, Z_, Z_+k_, 1);
 
 			// --- make new qkz ---
-			work_[Kz_+k] = work_[Z_+k];
-			mat_.PRECON(work_[Kz_+k]);
-			makeqkz(n_, k+1, Q_, Kz_, mqkz, invqkz, ldqkz, ipivqkz);
+			work_[Kz_+k_] = work_[Z_+k_];
+			mat_.PRECON(work_[Kz_+k_]);
+			makeqkz(n_, k_+1, Q_, Kz_, mqkz, invqkz, ldqkz, ipivqkz);
 
 			// --- compute new (right) residual= beta Aq - alpha Bq ---
-			jdqzmv(Q_+k, D_, Tp_, zalpha, zbeta);
+			jdqzmv(Q_+k_, D_, Tp_, zalpha, zbeta);
 			
 			// --- orthogonalize this vector to Z ---
-			mgs(n_, k, Z_, D_, 0);
+			mgs(n_, k_, Z_, D_, 0);
 			
 			rnrm = work_[D_].norm() / evcond.real();			
 
@@ -289,74 +296,74 @@ void JDQZ<Matrix>::solve()
 				ok = false;
 			}
 
-			found   = (rnrm < eps_ && (j > 1 || k == kmax_ - 1));
+			found   = (rnrm < eps_ && (j_ > 1 || k_ == kmax_ - 1));
 			attempt = found;
 
             timerStop("jdqz attempt");
 			
 			if (verbosity_ > 4)
-				WRITE("  step = " << std::setw(3) << step << "  j = "
-					  << std::setw(3) << j << "  residual = " << rnrm);
+				WRITE("  iteration = " << std::setw(3) << iterations_ << "  j = "
+					  << std::setw(3) << j_ << "  residual = " << rnrm);
 			
 			if (found)
 			{                
 				if (verbosity_ > 4)
-					WRITE("\n-- found eigenvalue: k = " << k << '\n'
+					WRITE("\n-- found eigenvalue: k = " << k_ << '\n'
 						  << "       alpha = " << zalpha << '\n'
 						  << "        beta = " << zbeta << '\n');
 
 				// --- increase the number of found evs ---
-				k++;
+				k_++;
 				
 				// --- store the eigenvalue ---				
-				aconv[k-1] = zalpha;
-				bconv[k-1] = zbeta;
+				aconv[k_-1] = zalpha;
+				bconv[k_-1] = zbeta;
 				
-				// --- reset solvestep
-				solvestep = 0;
+				// --- reset solveIterations
+				solveIterations = 0;
 				
-				if (k == kmax_) break; // break from this while loop
+				if (k_ == kmax_) break; // break from this while loop
 
                 timerStart("jdqz next ev");
 
 				
-				gemm(n_, j-1, j, 1.0, V_, &vsr(0,1), ldvs, 0.0, Aux_);
+				gemm(n_, j_-1, j_, 1.0, V_, &vsr(0,1), ldvs, 0.0, Aux_);
 				
 				// -- swap indices... --
 				itmp = V_;
 				V_   = Aux_;
 				Aux_ = itmp;
 				
-				gemm(n_, j-1, j, 1.0, Av_, &vsr(0,1), ldvs, 0.0, Aux_);
+				gemm(n_, j_-1, j_, 1.0, Av_, &vsr(0,1), ldvs, 0.0, Aux_);
 
 				// -- swap indices... --
 				itmp = Av_;
 				Av_  = Aux_;
 				Aux_ = itmp;
 
-				gemm(n_, j-1, j, 1.0, Bv_, &vsr(0,1), ldvs, 0.0, Aux_);
+				gemm(n_, j_-1, j_, 1.0, Bv_, &vsr(0,1), ldvs, 0.0, Aux_);
 
 				// -- swap indices... --
 				itmp = Bv_;
 				Bv_  = Aux_;
 				Aux_ = itmp;
 				
-				gemm(n_, j-1, j, 1.0, W_, &vsl(0,1), ldvs, 0.0, Aux_);
+				gemm(n_, j_-1, j_, 1.0, W_, &vsl(0,1), ldvs, 0.0, Aux_);
 
 				// -- swap indices... --
 				itmp = W_;
 				W_   = Aux_;
 				Aux_ = itmp;
 
-				j = j-1;
+				j_ = j_-1;
 
-				zlacpy_("A", &j, &j, &zma(1,1), &ldvs, &ma[0],  &ldvs);
-				zlacpy_("A", &j, &j, &ma[0],    &ldvs, &zma[0], &ldvs);
-				zlacpy_("A", &j, &j, &zmb(1,1), &ldvs, &mb[0],  &ldvs);
-				zlacpy_("A", &j, &j, &mb[0],    &ldvs, &zmb[0], &ldvs);
+				zlacpy_("A", &j_, &j_, &zma(1,1), &ldvs, &ma[0],  &ldvs);
+				zlacpy_("A", &j_, &j_, &ma[0],    &ldvs, &zma[0], &ldvs);
+				zlacpy_("A", &j_, &j_, &zmb(1,1), &ldvs, &mb[0],  &ldvs);
+				zlacpy_("A", &j_, &j_, &mb[0],    &ldvs, &zmb[0], &ldvs);
 
-				zlaset_("A", &j, &j, &zzero, &zone, &vsr[0], &ldvs);
-				zlaset_("A", &j, &j, &zzero, &zone, &vsl[0], &ldvs);
+				zlaset_("A", &j_, &j_, &zzero, &zone, &vsr[0], &ldvs);
+				zlaset_("A", &j_, &j_, &zzero, &zone, &vsl[0], &ldvs);
 
 				targeta = shifta;
 				targetb = shiftb;
@@ -367,36 +374,36 @@ void JDQZ<Matrix>::solve()
                 
                 timerStop("jdqz next ev");
 			}
-			else if (j == jmax_)
+			else if (j_ == jmax_)
 			{
                 timerStart("jdqz reduce j");
-				gemm(n_, jmin_, j, 1.0, V_, &vsr[0], ldvs, 0.0, Aux_);
+				gemm(n_, jmin_, j_, 1.0, V_, &vsr[0], ldvs, 0.0, Aux_);
 				itmp  = V_;
 				V_    = Aux_;
 				Aux_  = itmp;
 				
-				gemm(n_, jmin_, j, 1.0, Av_, &vsr[0], ldvs, 0.0, Aux_);
+				gemm(n_, jmin_, j_, 1.0, Av_, &vsr[0], ldvs, 0.0, Aux_);
 				itmp  = Av_;
 				Av_   = Aux_;
 				Aux_  = itmp;
 				
-				gemm(n_, jmin_, j, 1.0, Bv_, &vsr[0], ldvs, 0.0, Aux_);
+				gemm(n_, jmin_, j_, 1.0, Bv_, &vsr[0], ldvs, 0.0, Aux_);
 				itmp  = Bv_;
 				Bv_   = Aux_;
 				Aux_  = itmp;
 				
-				gemm(n_, jmin_, j, 1.0, W_, &vsl[0], ldvs, 0.0, Aux_);
+				gemm(n_, jmin_, j_, 1.0, W_, &vsl[0], ldvs, 0.0, Aux_);
 
 				itmp = W_;
 				W_   = Aux_;
 				Aux_ = itmp;
-				j    = jmin_;
+				j_    = jmin_;
 					
-				zlacpy_("A", &j, &j, &zma[0], &ldvs, &ma[0],  &ldvs);
-				zlacpy_("A", &j, &j, &zmb[0], &ldvs, &mb[0],  &ldvs);
+				zlacpy_("A", &j_, &j_, &zma[0], &ldvs, &ma[0],  &ldvs);
+				zlacpy_("A", &j_, &j_, &zmb[0], &ldvs, &mb[0],  &ldvs);
 				
-				zlaset_("A", &j, &j, &zzero, &zone, &vsr[0], &ldvs);
-				zlaset_("A", &j, &j, &zzero, &zone, &vsl[0], &ldvs);
+				zlaset_("A", &j_, &j_, &zzero, &zone, &vsr[0], &ldvs);
+				zlaset_("A", &j_, &j_, &zzero, &zone, &vsl[0], &ldvs);
                 timerStop("jdqz reduce j");
 			}
 		}
@@ -404,27 +411,26 @@ void JDQZ<Matrix>::solve()
 	}
 	
 	// --- Did enough eigenpairs converge? ---
-	if (kmax_ != k && verbosity_ > 0) 
+	if (kmax_ != k_ && verbosity_ > 0) 
 		WRITE(" --- less eigenvalues have converged than requested --- ");
 
-	kmax_ = k;
-	if (step >= maxstep_  && verbosity_ > 0)
-		WRITE(" --- maximum number of steps reached --- ");
+	if (iterations_ >= maxIterations_  && verbosity_ > 0)
+		WRITE(" --- maximum number of iterations reached --- ");
 		
 	if (wanted_)
 	{
 		// --- Compute the Schur matrices if the eigenvectors are ---
 		// ---  wanted, work_[Tp_] is used for temporary storage  ---
 		// ---  Compute RA:                                       ---
-		zlaset_("L", &k, &k, &zzero, &zzero, &ra[0], &ldvs);
-		for (int i = 1; i <= k; ++i) // 1-based !!
+		zlaset_("L", &k_, &k_, &zzero, &zzero, &ra[0], &ldvs);
+		for (int i = 1; i <= k_; ++i) // 1-based !!
 		{
 			mat_.AMUL(work_[Q_+i-1], work_[Tp_]);
 			gemv(n_, i, 1.0, Z_, Tp_, 0.0, &ra(0,i-1));
 		}
 		// --- Compute RB: ---
-		zlaset_("L", &k, &k, &zzero, &zzero, &rb[0], &ldvs);
-		for (int i = 1; i <= k; ++i) // 1-based !!
+		zlaset_("L", &k_, &k_, &zzero, &zzero, &rb[0], &ldvs);
+		for (int i = 1; i <= k_; ++i) // 1-based !!
 		{
 			mat_.BMUL(work_[Q_+i-1], work_[Tp_]);
 			gemv(n_, i, 1.0, Z_, Tp_, 0.0, &rb(0,i-1));
@@ -434,22 +440,22 @@ void JDQZ<Matrix>::solve()
 		// --- are computed. The Schur vectors in VR and VS are replaced by the
 		// --- eigenvectors of RA and RB
 		int INFO = 0;
-		zggev_("N", "V", &k, &ra[0], &ldvs, &rb[0], &ldvs,
+		zggev_("N", "V", &k_, &ra[0], &ldvs, &rb[0], &ldvs,
 			   &alpha[0], &beta[0], &vsl[0], &ldvs, &vsr[0], &ldvs,
 			   &zwork[0], &ldzwork, &rwork[0], &INFO);
 
 		// --- Compute the eigenvectors belonging to the found eigenvalues
 		// --- of A and put them in EIVEC
-		gemm(n_, k, k, 1.0, Q_, &vsr[0], ldvs, 0.0, eivec_);
+		gemm(n_, k_, k_, 1.0, Q_, &vsr[0], ldvs, 0.0, eivec_);
 	}
 	else
 	{
 		// --- Store the Schurvectors in eivec
-		for (int i = 0; i != k; ++i)
+		for (int i = 0; i != k_; ++i)
 		{
 			eivec_[i] = work_[Q_+i];
-			zcopy_(&k, &aconv[0], &one, &alpha[0], &one);
-			zcopy_(&k, &bconv[0], &one, &beta[0], &one);
+			zcopy_(&k_, &aconv[0], &one, &alpha[0], &one);
+			zcopy_(&k_, &bconv[0], &one, &beta[0], &one);
 		}
 	}
 	alpha_ = alpha;
@@ -900,23 +906,24 @@ void JDQZ<Matrix>::setParameters(PList &params)
 {
 	double shiftRe = params.get("Shift (real part)", 0.0);
 	double shiftIm = params.get("Shift (imaginary part)", 0.0);
-	shift_     = std::complex<double>(shiftRe, shiftIm);
+	shift_         = std::complex<double>(shiftRe, shiftIm);
 	
-	eps_       = params.get("Tolerance", 1e-9);
-	kmax_      = params.get("Number of eigenvalues", 5);
-	jmax_      = params.get("Max size search space", 20);
-	jmin_      = params.get("Min size search space", 10);
-	maxstep_   = params.get("Max JD iterations", 1000);
-	lock_      = params.get("Tracking parameter", 1e-9);
-	order_     = params.get("Criterion for Ritz values", 0);
-	method_    = params.get("Linear solver", 1);
-	m_         = params.get("GMRES search space", 30);
-	l_         = params.get("Bi-CGstab polynomial degree", 2);
-	maxnmv_    = params.get("Max mat-vec mults", 100);
-	testspace_ = params.get("Testspace expansion", 3); 
-	wanted_    = params.get("Compute converged eigenvectors", true);
-	verbosity_ = params.get("Verbosity", 1);
-    profile_   = params.get("Profile", false);
+	eps_           = params.get("Tolerance", 1e-9);
+	kmax_          = params.get("Number of eigenvalues", 5);
+	jmax_          = params.get("Max size search space", 20);
+	jmin_          = params.get("Min size search space", 10);
+	maxIterations_ = params.get("Max JD iterations", 1000);
+	lock_          = params.get("Tracking parameter", 1e-9);
+	order_         = params.get("Criterion for Ritz values", 0);
+	method_        = params.get("Linear solver", 1);
+	m_             = params.get("GMRES search space", 30);
+	l_             = params.get("Bi-CGstab polynomial degree", 2);
+	maxnmv_        = params.get("Max mat-vec mults", 100);
+	testspace_     = params.get("Testspace expansion", 3); 
+	wanted_        = params.get("Compute converged eigenvectors", true);
+	verbosity_     = params.get("Verbosity", 1);
+    profile_       = params.get("Profile", false);
+    reuseBasis_    = params.get("Reuse basis", false);
 	
 	if (method_ == 1)
 		lwork_ =  4 +  m_  + 5*jmax_ + 3*kmax_;
@@ -932,22 +939,22 @@ template<typename Matrix>
 void JDQZ<Matrix>::printParameters()
 {
 	WRITE("\nJDQZ Parameters:   ");
-	WRITE(" | n_         " << n_ );
-	WRITE(" | shift_     " << shift_ );
-	WRITE(" | eps_       " << eps_ );
-	WRITE(" | kmax_      " << kmax_ );
-	WRITE(" | jmax_      " << jmax_ );
-	WRITE(" | jmin_      " << jmin_ );
-	WRITE(" | maxstep_   " << maxstep_ );
-	WRITE(" | lock_      " << lock_ );
-	WRITE(" | order_     " << order_ );
-	WRITE(" | method_    " << method_ );
-	WRITE(" | m_         " << m_ );
-	WRITE(" | l_         " << l_ );
-	WRITE(" | maxnmv_    " << maxnmv_ );
-	WRITE(" | testspace_ " << testspace_ );
-	WRITE(" | wanted_    " << wanted_ );
-	WRITE(" | lwork_     " << lwork_ << '\n' );	
+	WRITE(" | n_             " << n_ );
+	WRITE(" | shift_         " << shift_ );
+	WRITE(" | eps_           " << eps_ );
+	WRITE(" | kmax_          " << kmax_ );
+	WRITE(" | jmax_          " << jmax_ );
+	WRITE(" | jmin_          " << jmin_ );
+	WRITE(" | maxIterations_ " << maxIterations_ );
+	WRITE(" | lock_          " << lock_ );
+	WRITE(" | order_         " << order_ );
+	WRITE(" | method_        " << method_ );
+	WRITE(" | m_             " << m_ );
+	WRITE(" | l_             " << l_ );
+	WRITE(" | maxnmv_        " << maxnmv_ );
+	WRITE(" | testspace_     " << testspace_ );
+	WRITE(" | wanted_        " << wanted_ );
+	WRITE(" | lwork_         " << lwork_ << '\n' );	
 }
 
 //==================================================================

@@ -49,7 +49,13 @@ class JDQZ
 	//  take it small to avoid missing eigensolutions (~1e-9)
 	double lock_;
 
-	// Number of wanted eigensolutions, on output: number of converged eigenpairs
+	// Size of the space
+	int j_;
+
+	// Number of converged eigenpairs
+	int k_;
+
+	// Number of wanted eigensolutions
 	int kmax_;
 
 	// Maximum size of the search space
@@ -58,8 +64,11 @@ class JDQZ
 	// Minimum size of the search space
 	int jmin_;
 
+	// Number of Jacobi-Davidson iterations
+	int iterations_;
+
 	// Maximum number of Jacobi-Davidson iterations
-	int maxstep_;
+	int maxIterations_;
 
 	// Determines how to expand the testspace W:
 	//     Testspace 1: w = "Standard Petrov" * v            (Section 3.1.1)
@@ -120,6 +129,9 @@ class JDQZ
 	// output level
 	int verbosity_;
 
+	// determines if the basis is reused on the next solve
+	bool reuseBasis_;
+
     //-------------------------------------------------------
     // Profiling: 
     // enable profile
@@ -144,7 +156,8 @@ public:
 	void setParameters(PList &params);
 	void printParameters();	
 	
-	int kmax() {return kmax_;}
+	int kmax() {return k_;}
+	int iterations() {return iterations_;}
 	std::vector<Vector> getEigenVectors() {return eivec_;}
 	std::vector<std::complex<double> > getAlpha() {return alpha_;}
 	std::vector<std::complex<double> > getBeta() {return beta_;}

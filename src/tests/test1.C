@@ -157,7 +157,10 @@ TEST(JDQZ, Results)
 										  0.205962e-08,
 										  0.686810e-09,
 										  0.614660e-12 };
-	
+
+	EXPECT_EQ(jdqz.kmax(), 5);
+	EXPECT_LT(jdqz.iterations(), 30);
+
 	for (int j = 0; j != jdqz.kmax(); ++j)
 	{
 		TestVector residue(size, 0.0);
@@ -168,4 +171,49 @@ TEST(JDQZ, Results)
 		residue.axpy(-alpha[j], tmp);
 		EXPECT_NEAR(residue.norm(), example_norms[j], 1e-14);
 	}
+}
+
+//------------------------------------------------------------------
+TEST(JDQZ, ComputeTwice)
+{
+	size_t size = 100;
+	TestMatrix testmat(size);
+	TestVector vec(size, 0.0);
+	JDQZ<TestMatrix> jdqz(testmat, vec);
+
+	ParameterList params;
+ 	jdqz.setParameters(params);
+
+	jdqz.solve();
+
+	EXPECT_EQ(jdqz.kmax(), 5);
+	EXPECT_LT(jdqz.iterations(), 30);
+
+	jdqz.solve();
+
+	EXPECT_EQ(jdqz.kmax(), 5);
+	EXPECT_LT(jdqz.iterations(), 30);
+}
+
+//------------------------------------------------------------------
+TEST(JDQZ, ReuseBasis)
+{
+	size_t size = 100;
+	TestMatrix testmat(size);
+	TestVector vec(size, 0.0);
+	JDQZ<TestMatrix> jdqz(testmat, vec);
+
+	ParameterList params;
+	params.set("Reuse basis", true);
+ 	jdqz.setParameters(params);
+
+	jdqz.solve();
+
+	EXPECT_EQ(jdqz.kmax(), 5);
+	EXPECT_LT(jdqz.iterations(), 30);
+
+	jdqz.solve();
+
+	EXPECT_EQ(jdqz.kmax(), 5);
+	EXPECT_EQ(jdqz.iterations(), 1);
 }
