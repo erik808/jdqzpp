@@ -298,6 +298,9 @@ JdqzppSolMgr<ScalarType,MV,OP,PREC>::JdqzppSolMgr(
     double shift = pl.get<double>("Shift", 0.0);
     params->set("Shift (real part)", shift);
 
+    bool reuse_basis = pl.get<bool>("Reuse Basis", false);
+    params->set("Reuse basis", reuse_basis);
+
     combined_params->setParametersNotAlreadySet(*params);
 
     ComplexVectorType initVec(*d_problem->getInitVec());
