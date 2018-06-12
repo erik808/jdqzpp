@@ -8,8 +8,6 @@ find_package(Anasazi)
 if (($ENV{PLAT} MATCHES "cartesius") OR
     ($ENV{PLAT} MATCHES "hopf"))
     
-    message("-- PLAT = " $ENV{PLAT})
-
     if (NOT Anasazi_FOUND)
       message(FATAL_ERROR " PATH should contain Trilinos_DIR/bin ")
     endif ()
