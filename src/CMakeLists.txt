@@ -5,9 +5,8 @@ find_package(Anasazi)
 # Lapack
 # --> For now I hardcode a few things I need on cartesius
 # --> When I find out how to detect these I will do that
-if (DEFINED ENV{PLAT} AND
-    ( $ENV{PLAT} MATCHES "cartesius" OR
-      $ENV{PLAT} MATCHES "hopf") )
+if ($ENV{PLAT} MATCHES "cartesius" OR
+    $ENV{PLAT} MATCHES "hopf")
 
   if (NOT Anasazi_FOUND)
     message(FATAL_ERROR " PATH should contain Trilinos_DIR/bin ")
