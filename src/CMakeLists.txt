@@ -5,38 +5,39 @@ find_package(Anasazi)
 # Lapack
 # --> For now I hardcode a few things I need on cartesius
 # --> When I find out how to detect these I will do that
-if (DEFINED ENV{PLAT} AND
-    ( $ENV{PLAT} MATCHES "cartesius" OR
-      $ENV{PLAT} MATCHES "hopf") )
+if (($ENV{PLAT} MATCHES "cartesius") OR
+    ($ENV{PLAT} MATCHES "hopf"))
+    
+    message("-- PLAT = " $ENV{PLAT})
 
-  if (NOT Anasazi_FOUND)
-    message(FATAL_ERROR " PATH should contain Trilinos_DIR/bin ")
+    if (NOT Anasazi_FOUND)
+      message(FATAL_ERROR " PATH should contain Trilinos_DIR/bin ")
+    endif ()
+
+    if (NOT DEFINED ${CMAKE_CXX_COMPILER})
+      set(CMAKE_CXX_COMPILER ${Anasazi_CXX_COMPILER})
+    endif ()
+
+    message("-- CXX compiler: ${CMAKE_CXX_COMPILER}")
+
+    if (NOT DEFINED ${CMAKE_Fortran_COMPILER})
+      set(CMAKE_Fortran_COMPILER ${Anasazi_Fortran_COMPILER})
+    endif ()
+
+    message("-- Fortran compiler: ${CMAKE_Fortran_COMPILER}")
+
+    set(LAPACK_LIBRARIES
+      mkl_intel_lp64
+      mkl_intel_thread
+      mkl_core
+      iomp5
+      pthread )
+  else ()
+    find_package(LAPACK)
+    if (NOT LAPACK_FOUND)
+      message(FATAL_ERROR "Lapack not found")
+    endif ()
   endif ()
-
-  if (NOT DEFINED ${CMAKE_CXX_COMPILER})
-    set(CMAKE_CXX_COMPILER ${Anasazi_CXX_COMPILER})
-  endif ()
-
-  message("-- CXX compiler: ${CMAKE_CXX_COMPILER}")
-
-  if (NOT DEFINED ${CMAKE_Fortran_COMPILER})
-    set(CMAKE_Fortran_COMPILER ${Anasazi_Fortran_COMPILER})
-  endif ()
-
-  message("-- Fortran compiler: ${CMAKE_Fortran_COMPILER}")
-
-  set(LAPACK_LIBRARIES
-    mkl_intel_lp64
-    mkl_intel_thread
-    mkl_core
-    iomp5
-    pthread )
-else ()
-  find_package(LAPACK)
-  if (NOT LAPACK_FOUND)
-    message(FATAL_ERROR "Lapack not found")
-  endif ()
-endif ()
 
 # Enable fortran
 get_property(languages GLOBAL PROPERTY ENABLED_LANGUAGES)
