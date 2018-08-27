@@ -6,9 +6,9 @@ option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 
 # Installation variables
 set(library_list)
-set(INCLUDE_INSTALL_DIR ${PROJECT_SOURCE_DIR}/include)
-set(LIB_INSTALL_DIR ${PROJECT_SOURCE_DIR}/lib)
-set(BIN_INSTALL_DIR ${PROJECT_SOURCE_DIR}/bin)
+set(INCLUDE_INSTALL_DIR ${INSTALL_DIR}/include)
+set(LIB_INSTALL_DIR ${INSTALL_DIR}/lib)
+set(BIN_INSTALL_DIR ${INSTALL_DIR}/bin)
 
 enable_testing()
 
