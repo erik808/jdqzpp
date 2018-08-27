@@ -6,9 +6,9 @@ option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 
 # Installation variables
 set(library_list)
-set(INCLUDE_INSTALL_DIR ${INSTALL_DIR}/include)
-set(LIB_INSTALL_DIR ${INSTALL_DIR}/lib)
-set(BIN_INSTALL_DIR ${INSTALL_DIR}/bin)
+set(INCLUDE_INSTALL_DIR include)
+set(LIB_INSTALL_DIR lib)
+set(BIN_INSTALL_DIR bin)
 
 enable_testing()
 
@@ -21,7 +21,7 @@ write_basic_package_version_file(
   VERSION 0 COMPATIBILITY SameMajorVersion
   )
 
-set(ConfigPackageLocation ${LIB_INSTALL_DIR}/cmake/JDQZPP)
+set(ConfigPackageLocation lib/cmake/JDQZPP)
 configure_package_config_file("${PROJECT_SOURCE_DIR}/cmake/JDQZPPConfig.cmake.in"
   "${PROJECT_BINARY_DIR}/JDQZPPConfig.cmake" INSTALL_DESTINATION ${ConfigPackageLocation}
   PATH_VARS INCLUDE_INSTALL_DIR)
