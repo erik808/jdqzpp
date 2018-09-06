@@ -5,7 +5,7 @@ SET_DIRECTORY_PROPERTIES(PROPERTIES EP_PREFIX ${CMAKE_BINARY_DIR}/third_party)
 
 ExternalProject_Add(
   googletest
-  GIT_REPOSITORY git@github.com:google/googletest.git
+  GIT_REPOSITORY git://github.com/google/googletest.git
   GIT_TAG release-1.8.0
   INSTALL_COMMAND ""
   LOG_DOWNLOAD ON
