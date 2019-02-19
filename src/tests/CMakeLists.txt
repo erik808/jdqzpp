@@ -42,6 +42,11 @@ set(TEST_SOURCES
 if (${Anasazi_FOUND})
   list(APPEND TEST_SOURCES test_interfaces)
 
+  find_package(MPI)
+
+  include_directories(${MPI_CXX_INCLUDE_DIRS})
+  link_directories(${MPI_CXX_LIBRARY_DIRS})
+
   include_directories(${Anasazi_INCLUDE_DIRS})
   include_directories(${Anasazi_TPL_INCLUDE_DIRS})
 
@@ -65,6 +70,7 @@ foreach(test_source ${TEST_SOURCES})
   if (Anasazi_FOUND)
     target_link_libraries(${test_name} ${Anasazi_LIBRARIES})
     target_link_libraries(${test_name} ${Anasazi_TPL_LIBRARIES})
+    target_link_libraries(${test_name} ${MPI_CXX_LIBRARIES})
   endif()
 
   add_test(${test_name} ${test_name})
