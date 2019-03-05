@@ -47,14 +47,15 @@ extern "C"
 				 int *LDB, int *INFO);
 
 //  compute the left and/or right Schur vectors (VSL and VSR)
-	void zgegs_(char *JOBVSL, char *JOBVSR, int *N,
-				complex *A, int *LDA,
-				complex *B, int *LDB,
-				complex *ALPHA, complex *BETA,
+    void zgges_(char *JOBVSL, char *JOBVSR,
+                char *SORT, int *SELCTG, int *N,
+				complex *A, int *LDA, complex *B, int *LDB,
+				int *SDIM,
+                complex *ALPHA, complex *BETA,
 				complex *VSL, int *LDVSL,
 				complex *VSR, int *LDVSR,
 				complex *WORK, int *LWORK,
-				double *RWORK, int *INFO);
+				double *RWORK, int *BWORK, int *INFO);
 }
 
 //==================================================================
@@ -836,11 +837,22 @@ void JDQZ<Matrix>::gegs(int N, Complex2D &A, Complex2D &B,
 	
 	char JOBVSL = 'V'; // compute left  Schur vectors
 	char JOBVSR = 'V'; // compute right Schur vectors
+    
+    char SORT   = 'N'; // do not sort eigenvalues
+    int  SELCTG = 0;   // dummy eigenvalue selection
+    int  SDIM   = 0;   // dummy sort argument
+    int  BWORK  = 0;   // dummy sort work array
 
 	// calling lapack
-	zgegs_(&JOBVSL, &JOBVSR, &N, &A[0], &LDA, &B[0], &LDB,
-		   &alpha[0], &beta[0], &VSL[0], &LDVSL, &VSR[0], &LDVSR,
-		   &work[0], &LWORK, &rwork[0], &INFO);
+    zgges_(&JOBVSL, &JOBVSR,
+           &SORT, &SELCTG, &N,
+           &A[0], &LDA, &B[0], &LDB,
+           &SDIM,
+           &alpha[0], &beta[0],
+           &VSL[0], &LDVSL,
+           &VSR[0], &LDVSR,
+           &work[0], &LWORK,
+           &rwork[0], &BWORK, &INFO);
 
 	assert(INFO == 0);
 
