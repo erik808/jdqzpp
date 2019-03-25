@@ -25,6 +25,10 @@ if (NOT DEFINED ${CMAKE_Fortran_FLAGS})
   elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Intel") #ifort, icc
     set (CMAKE_Fortran_FLAGS "-g -O3 -heap-arrays 1 -extend-source 132")
   endif ()
+
+  if(LAPACK_LIBRARIES MATCHES "Accelerate.*")
+    set (CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -framework Accelerate")
+  endif ()
 endif ()
 
 # Set CXX flags
