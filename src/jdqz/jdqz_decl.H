@@ -13,7 +13,46 @@ typedef std::complex<double> complex;
 
 class Complex1D;
 class Complex2D;
-class JDQZTimer;
+
+//==================================================================
+// Timer class
+class JDQZTimer
+{
+	double startTime_;
+    std::string label_;
+public:
+	JDQZTimer(std::string const &label)
+		:
+		startTime_(0.0),
+        label_(label)
+		{}
+	
+	double wallTime()
+		{
+#ifdef HAVE_MPI 
+			int mpiInit;
+			MPI_Initialized(&mpiInit);
+			if (mpiInit)
+				return MPI_Wtime();
+			else
+				return (double) std::clock() / CLOCKS_PER_SEC;
+#else
+            return (double) std::clock() / CLOCKS_PER_SEC;
+#endif 
+		}
+	
+	void resetStartTime()
+		{ startTime_ = wallTime();}
+	
+	double elapsedTime()
+		{ return (double) (wallTime() - startTime_); }
+
+    void printLabel()
+        { WRITE(" Timer: " << label_); }
+
+    std::string label() { return label_;}
+};
+
 
 // This is (going to be) a templated port of
 // the original JDQZ code by Fokkema and van Gijzen.
@@ -300,44 +339,4 @@ public:
 	size_t rows() {return m_;}
 	size_t cols() {return n_;}
 };
-
-//==================================================================
-// Timer class
-class JDQZTimer
-{
-	double startTime_;
-    std::string label_;
-public:
-	JDQZTimer(std::string const &label)
-		:
-		startTime_(0.0),
-        label_(label)
-		{}
-	
-	double wallTime()
-		{
-#ifdef HAVE_MPI 
-			int mpiInit;
-			MPI_Initialized(&mpiInit);
-			if (mpiInit)
-				return MPI_Wtime();
-			else
-				return (double) std::clock() / CLOCKS_PER_SEC;
-#else
-            return (double) std::clock() / CLOCKS_PER_SEC;
-#endif 
-		}
-	
-	void resetStartTime()
-		{ startTime_ = wallTime();}
-	
-	double elapsedTime()
-		{ return (double) (wallTime() - startTime_); }
-
-    void printLabel()
-        { WRITE(" Timer: " << label_); }
-
-    std::string label() { return label_;}
-};
-
 #endif
