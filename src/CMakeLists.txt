@@ -21,7 +21,7 @@ message("-- Fortran compiler ID: ${CMAKE_Fortran_COMPILER_ID}")
 if (NOT DEFINED ${CMAKE_Fortran_FLAGS})
   if (CMAKE_Fortran_COMPILER_ID MATCHES "GNU") #gfortran, gcc
     set (CMAKE_Fortran_FLAGS 
-      "-g -u -O3 -ffixed-line-length-132 -ffree-line-length-none")
+      "-g -O3 -ffixed-line-length-132 -ffree-line-length-none")
   elseif (CMAKE_Fortran_COMPILER_ID MATCHES "Intel") #ifort, icc
     set (CMAKE_Fortran_FLAGS "-g -O3 -heap-arrays 1 -extend-source 132")
   endif ()
