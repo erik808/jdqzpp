@@ -76,7 +76,3 @@ foreach(test_source ${TEST_SOURCES})
   add_test(${test_name} ${test_name})
   list(APPEND test_list ${test_name})
 endforeach()
-
-# Use make check to both build tests and test
-add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} --force-new-ctest-process --verbose
-  DEPENDS ${test_targets})

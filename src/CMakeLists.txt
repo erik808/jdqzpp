@@ -33,7 +33,7 @@ if (NOT DEFINED ${CMAKE_CXX_FLAGS})
   if (CMAKE_CXX_COMPILER_ID MATCHES "GNU") #gfortran, gcc
     set (CMAKE_CXX_FLAGS "-g -std=c++11 -O3 -Wall")
   elseif (CMAKE_CXX_COMPILER_ID MATCHES "Intel") #ifort, icc
-    set (CMAKE_CXX_FLAGS "-std=c++11 -O3")
+    set (CMAKE_CXX_FLAGS "-g -std=c++11 -O3")
   endif ()
 endif ()
 
