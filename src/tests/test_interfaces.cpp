@@ -5,7 +5,7 @@
 #include <iostream>
 #include <assert.h>
 
-#include "jdqz.H"
+#include "jdqz.hpp"
 
 #include "Epetra_SerialComm.h"
 #include "Epetra_Map.h"
@@ -18,7 +18,7 @@
 #include "EpetraComplexVector.hpp"
 #include "AnasaziJdqzppSolMgr.hpp"
 
-#include "test.H"
+#include "test.hpp"
 
 std::vector<double>  TestVector::norms = std::vector<double>();
 std::vector<complex> TestVector::alphas = std::vector<complex>();

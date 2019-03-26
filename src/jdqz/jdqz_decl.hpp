@@ -1,5 +1,5 @@
-#ifndef JDQZ_DECL_H
-#define JDQZ_DECL_H
+#ifndef JDQZ_DECL_HPP
+#define JDQZ_DECL_HPP
 
 #include <vector>
 #include <complex>
@@ -7,7 +7,7 @@
 #include <array>
 #include <stack>
 #include <ctime>
-#include "jdqz_macros.H"
+#include "jdqz_macros.hpp"
 
 typedef std::complex<double> complex;
 
