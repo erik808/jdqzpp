@@ -1,8 +1,8 @@
-#ifndef JDQZ_H
-#define JDQZ_H
+#ifndef JDQZ_HPP
+#define JDQZ_HPP
 
-#include "jdqz_decl.H"
-#include "jdqz_macros.H"
+#include "jdqz_decl.hpp"
+#include "jdqz_macros.hpp"
 #include <ios>
 #include <fstream>
 #include <math.h>

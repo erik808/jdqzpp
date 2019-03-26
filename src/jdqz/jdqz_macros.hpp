@@ -1,5 +1,5 @@
-#ifndef JDQZMACROS_H
-#define JDQZMACROS_H
+#ifndef JDQZMACROS_HPP
+#define JDQZMACROS_HPP
 
 // PARALLEL PRINT MACRO
 #ifndef WRITE

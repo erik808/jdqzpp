@@ -1,11 +1,11 @@
 #include "gtest/gtest.h" // google test framework
-#include "jdqz.H"
+#include "jdqz.hpp"
 #include <vector>
 #include <complex>
 #include <iostream>
 #include <assert.h>
 
-#include "test.H"
+#include "test.hpp"
 
 std::vector<double>  TestVector::norms = std::vector<double>();
 std::vector<complex> TestVector::alphas = std::vector<complex>();
