@@ -617,7 +617,7 @@ void JDQZ<Matrix>::gmres(int n, int x, int r, int mxm, double &eps, int &mxmv,
 	int m, m1;
 	int one  = 1;
 	
-	complex ztmp, zdotc;
+	complex ztmp;
 	complex rcs(0,0);
 
 	std::vector<double> c(maxm);
