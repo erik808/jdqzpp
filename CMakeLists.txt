@@ -5,7 +5,6 @@ project (jdqz)
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 
 # Installation variables
-set(library_list)
 set(INCLUDE_INSTALL_DIR include)
 set(LIB_INSTALL_DIR lib)
 set(BIN_INSTALL_DIR bin)
@@ -21,13 +20,17 @@ write_basic_package_version_file(
   VERSION 0 COMPATIBILITY SameMajorVersion
   )
 
-set(ConfigPackageLocation lib/cmake/JDQZPP)
-configure_package_config_file("${PROJECT_SOURCE_DIR}/cmake/JDQZPPConfig.cmake.in"
-  "${PROJECT_BINARY_DIR}/JDQZPPConfig.cmake" INSTALL_DESTINATION ${ConfigPackageLocation}
-  PATH_VARS INCLUDE_INSTALL_DIR)
+export(EXPORT JDQZPPTargets
+  FILE "${CMAKE_CURRENT_BINARY_DIR}/JDQZPP/JDQZPPTargets.cmake"
+)
+configure_file(cmake/JDQZPPConfig.cmake
+  "${CMAKE_CURRENT_BINARY_DIR}/JDQZPP/JDQZPPConfig.cmake"
+  COPYONLY
+)
 
+set(ConfigPackageLocation lib/cmake/JDQZPP)
 install(EXPORT JDQZPPTargets FILE JDQZPPTargets.cmake DESTINATION ${ConfigPackageLocation})
-install(FILES "${PROJECT_BINARY_DIR}/JDQZPPConfig.cmake"
+install(FILES "cmake/JDQZPPConfig.cmake"
   "${CMAKE_CURRENT_BINARY_DIR}/JDQZPP/JDQZPPConfigVersion.cmake"
   DESTINATION ${ConfigPackageLocation}
   )

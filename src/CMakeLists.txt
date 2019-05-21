@@ -57,5 +57,3 @@ add_subdirectory(jdqz_tools)
 add_subdirectory(jdqz)
 add_subdirectory(interfaces)
 add_subdirectory(tests)
-
-set(library_list ${library_list} PARENT_SCOPE)
