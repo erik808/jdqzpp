@@ -924,6 +924,31 @@ void JDQZ<Matrix>::timerStop(std::string const &msg)
 //==================================================================
 template<typename Matrix>
 template<typename PList>
+void JDQZ<Matrix>::getDefaultParameters(PList &params)
+{
+    params.set("Shift (real part)", 0.0);
+    params.set("Shift (imaginary part)", 0.0);
+    params.set("Tolerance", 1e-9);
+    params.set("Number of eigenvalues", 5);
+    params.set("Max size search space", 20);
+    params.set("Min size search space", 10);
+    params.set("Max JD iterations", 1000);
+    params.set("Tracking parameter", 1e-9);
+    params.set("Criterion for Ritz values", 0);
+    params.set("Linear solver", 1);
+    params.set("GMRES search space", 30);
+    params.set("Bi-CGstab polynomial degree", 2);
+    params.set("Max mat-vec mults", 100);
+    params.set("Testspace expansion", 3);
+    params.set("Compute converged eigenvectors", true);
+    params.set("Verbosity", 1);
+    params.set("Profile", false);
+    params.set("Reuse basis", false);
+}
+
+//==================================================================
+template<typename Matrix>
+template<typename PList>
 void JDQZ<Matrix>::setParameters(PList &params)
 {
 	double shiftRe = params.get("Shift (real part)", 0.0);
