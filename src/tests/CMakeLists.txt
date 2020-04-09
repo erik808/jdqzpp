@@ -39,6 +39,8 @@ set(TEST_SOURCES
   test2
   )
 
+find_package(Anasazi QUIET)
+
 if (${Anasazi_FOUND})
   list(APPEND TEST_SOURCES test_interfaces)
 
