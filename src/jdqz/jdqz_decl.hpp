@@ -192,8 +192,10 @@ public:
 	void solve();
 
 	template<typename PList>
+	static void getDefaultParameters(PList &params);
+	template<typename PList>
 	void setParameters(PList &params);
-	void printParameters();	
+	void printParameters();
 	
 	int kmax() {return k_;}
 	int iterations() {return iterations_;}

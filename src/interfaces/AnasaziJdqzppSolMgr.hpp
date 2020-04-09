@@ -15,7 +15,7 @@
 
 #include "Ifpack_Preconditioner.h"
 
-#include "jdqz.H"
+#include "jdqz.hpp"
 
 #include "EpetraComplexVector.hpp"
 
