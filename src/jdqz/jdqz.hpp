@@ -56,19 +56,14 @@ extern "C"
 				complex *VSR, int *LDVSR,
 				complex *WORK, int *LWORK,
 				double *RWORK, int *BWORK, int *INFO);
+
+//  reorder the left and/or right Schur vectors (VSL and VSR)
+    void ztgexc_(int *WANTQ, int *WANTZ, int *N,
+                 complex *A, int *LDA, complex *B, int *LDB,
+                 complex *Q, int *LDQ, complex *Z, int *LDZ,
+                 int *IFST, int *ILST,
+                 int *INFO);
 }
-
-//==================================================================
-// JDQZ_TOOLS dependencies
-extern "C"
-{
-	int select_(int *n, complex *sa, complex *sb,
-				complex *a, complex *b, int *order);
-
-	void myexc_(int *n, complex *s, complex *t, complex *z,
-				complex *q, int *ldz, int *ifst, int *ilst);
-}
-
 //==================================================================
 // constructor
 template<typename Matrix>
@@ -582,23 +577,40 @@ void JDQZ<Matrix>::qzsort(complex ta, complex tb, int k,
 						  Complex1D &beta, int order)
 {
     timerStart("jdqz qzsort");
-    
-	// In this interface we should be careful
-	// with 1 and 0 based calls...
-	int j = 0;
-	for (int i = 1; i <= k; ++i)
-	{
-		for (j = 1; j <= k; ++j)
-		{
-			alpha[j-1] = s(j-1,j-1);
-			beta[j-1] = t(j-1,j-1);
-		}
-		
-		int N = k-i+1;		
-		j = select_(&N, &ta, &tb, &alpha[i-1], &beta[i-1], &order) + i-1;		
-		myexc_(&k, &s[0], &t[0], &z[0], &q[0], &ldz, &j, &i);		
-	}
-    
+
+    int wantq = 1;
+    int wantz = 1;
+    int n = k;
+    int lds = ldz;
+    int ldt = ldz;
+    int ldq = ldz;
+    int ifst;
+    int ilst;
+    int info;
+
+    for (int i = 0; i < n; ++i)
+    {
+        std::vector<int> idx(n);
+        for (int j = 0; j < n; ++j)
+            idx[j] = j;
+
+        std::sort(idx.begin(), idx.end(),
+                  [s, t, ta, tb](int i1, int i2){
+                      return std::abs(s(i1, i1) / t(i1, i1) - ta / tb) < std::abs(s(i2, i2) / t(i2, i2) - ta / tb);
+                  });
+
+        ifst = idx[i] + 1;
+        ilst = i + 1;
+
+        if (ifst == ilst)
+            continue;
+
+        ztgexc_(&wantq, &wantz, &n, &s[0], &lds, &t[0], &ldt,
+                &z[0], &ldz, &q[0], &ldq, &ifst, &ilst, &info);
+
+        assert(info == 0);
+    }
+
     timerStop("jdqz qzsort");
 }
 
