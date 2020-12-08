@@ -569,6 +569,59 @@ void JDQZ<Matrix>::gemm(int m, int n, int k, complex alpha, int A,
     timerStop("jdqz gemm");
 }
 
+std::vector<int> select(int n, complex ta, complex tb,
+                        Complex2D &s, Complex2D &t, int order)
+{
+    std::vector<int> idx(n);
+    for (int j = 0; j < n; ++j)
+        idx[j] = j;
+
+    switch (order)
+    {
+    case 0:
+        // Nearest to target
+        std::sort(idx.begin(), idx.end(),
+                  [s, t, ta, tb](int i1, int i2){
+                      return std::abs(s(i1, i1) / t(i1, i1) - ta / tb) < std::abs(s(i2, i2) / t(i2, i2) - ta / tb);
+                  });
+        break;
+    case -1:
+        // Smallest real part
+        std::sort(idx.begin(), idx.end(),
+                  [s, t](int i1, int i2){
+                      return (t(i1, i1).real() == 0.0 and s(i1, i1).real() < 0.0) or
+                          (s(i1, i1).real() / t(i1, i1).real() < s(i2, i2).real() / t(i2, i2).real());
+                  });
+        break;
+    case 1:
+        // Largest real part
+        std::sort(idx.begin(), idx.end(),
+                  [s, t](int i1, int i2){
+                      return (t(i1, i1).real() == 0.0 and s(i1, i1).real() > 0.0) or
+                          (s(i1, i1).real() / t(i1, i1).real() > s(i2, i2).real() / t(i2, i2).real());
+                  });
+        break;
+    case -2:
+        // Smallest imaginary part
+        std::sort(idx.begin(), idx.end(),
+                  [s, t](int i1, int i2){
+                      return (t(i1, i1).imag() == 0.0 and s(i1, i1).imag() < 0.0) or
+                          (s(i1, i1).imag() / t(i1, i1).imag() < s(i2, i2).imag() / t(i2, i2).imag());
+                  });
+        break;
+    case 2:
+        // Largest imaginary part
+        std::sort(idx.begin(), idx.end(),
+                  [s, t](int i1, int i2){
+                      return (t(i1, i1).imag() == 0.0 and s(i1, i1).imag() > 0.0) or
+                          (s(i1, i1).imag() / t(i1, i1).imag() > s(i2, i2).imag() / t(i2, i2).imag());
+                  });
+        break;
+    }
+
+    return idx;
+}
+
 //==================================================================
 template<typename Matrix>
 void JDQZ<Matrix>::qzsort(complex ta, complex tb, int k,
@@ -590,15 +643,7 @@ void JDQZ<Matrix>::qzsort(complex ta, complex tb, int k,
 
     for (int i = 0; i < n; ++i)
     {
-        std::vector<int> idx(n);
-        for (int j = 0; j < n; ++j)
-            idx[j] = j;
-
-        std::sort(idx.begin(), idx.end(),
-                  [s, t, ta, tb](int i1, int i2){
-                      return std::abs(s(i1, i1) / t(i1, i1) - ta / tb) < std::abs(s(i2, i2) / t(i2, i2) - ta / tb);
-                  });
-
+        std::vector<int> idx = select(n, ta, tb, s, t, order);
         ifst = idx[i] + 1;
         ilst = i + 1;
 
