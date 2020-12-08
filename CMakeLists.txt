@@ -26,7 +26,6 @@ configure_package_config_file("${PROJECT_SOURCE_DIR}/cmake/JDQZPPConfig.cmake.in
   "${PROJECT_BINARY_DIR}/JDQZPPConfig.cmake" INSTALL_DESTINATION ${ConfigPackageLocation}
   PATH_VARS INCLUDE_INSTALL_DIR)
 
-install(EXPORT JDQZPPTargets FILE JDQZPPTargets.cmake DESTINATION ${ConfigPackageLocation})
 install(FILES "${PROJECT_BINARY_DIR}/JDQZPPConfig.cmake"
   "${CMAKE_CURRENT_BINARY_DIR}/JDQZPP/JDQZPPConfigVersion.cmake"
   DESTINATION ${ConfigPackageLocation}
