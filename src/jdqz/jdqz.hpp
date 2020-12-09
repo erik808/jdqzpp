@@ -261,7 +261,7 @@ void JDQZ<Matrix>::solve()
             timerStart("jdqz attempt");
 			// --- Sort the Petrov pairs ---
 			qzsort(targeta, targetb, j_, zma, zmb,
-				   vsl, vsr, ldvs, alpha, beta, order_);
+				   vsl, vsr, ldvs, order_);
 
 			zalpha = zma(0,0);
             zbeta  = zmb(0,0);
@@ -625,9 +625,8 @@ std::vector<int> select(int n, complex ta, complex tb,
 //==================================================================
 template<typename Matrix>
 void JDQZ<Matrix>::qzsort(complex ta, complex tb, int k,
-						  Complex2D &s, Complex2D &t, Complex2D &z,
-						  Complex2D &q, int ldz, Complex1D &alpha,
-						  Complex1D &beta, int order)
+                          Complex2D &s, Complex2D &t, Complex2D &z,
+                          Complex2D &q, int ldz, int order)
 {
     timerStart("jdqz qzsort");
 
