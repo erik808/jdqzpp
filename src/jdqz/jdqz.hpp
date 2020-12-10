@@ -747,8 +747,8 @@ void JDQZ<Matrix>::gmres(int n, int x, int r, int mxm, double &eps, int &mxmv,
         rnrm = work_[v].norm();
 
         if (verbosity_ > 6)
-            WRITE("  jdqz->gmres: rnrm = " << rnrm << " nmv = " << nmv)
-                }
+            WRITE("  jdqz->gmres: rnrm = " << rnrm << " nmv = " << nmv);
+    }
     // --- return ---
     eps  = rnrm / rnrm0;
     mxmv = nmv;
@@ -823,8 +823,8 @@ void JDQZ<Matrix>::ortho(int n, int v, int w,
         s1 = work_[w].norm();
 
         if (s1 < s0 / kappa  && verbosity_ > 0)
-            WRITE("WARNING: zero vector in mgs...")
-                }
+            WRITE("WARNING: zero vector in mgs...");
+    }
 
     timerStop("jdqz ortho");
 }
